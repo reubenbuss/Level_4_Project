@@ -42,7 +42,7 @@ x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(8, activation='relu'),
     tf.keras.layers.Dense(3, activation='softmax')
 ])
 
