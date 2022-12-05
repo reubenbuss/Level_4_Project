@@ -5,10 +5,10 @@ from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 import shap
-import graphviz
-from dtreeviz.models.sklearn_decision_trees import ShadowSKDTree
 from dtreeviz import trees
-
+from dtreeviz.models.lightgbm_decision_tree import ShadowLightGBMTree
+from sklearn.preprocessing import LabelEncoder
+import graphviz
 
 file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack.csv"
 data = pd.read_csv(file)
@@ -18,6 +18,8 @@ data.drop(["SpectraID","WhiteReference","ContactProbe",
     "SurfaceDescription"],axis = 1,inplace=True)
 
 y=data.Species
+y=data.Species
+y = LabelEncoder().fit_transform(y)
 
 #all
 #x=data.drop(["Species"],axis=1,inplace=False)
@@ -50,8 +52,14 @@ def shap_plot(model,x):
 #shap_plot(model,x)
 
 
-sk_dtree = ShadowSKDTree(model.booster_,x_train,y_train,list(x.columns),["Black","Red","white"])
-trees.dtreeviz(sk_dtree, show_node_labels=True)
+sk_dtree = ShadowLightGBMTree(model.booster_, 
+               x_data=x_train,
+               y_data=y_train,
+               target_name='Species',
+               feature_names=list(x.columns), 
+               class_names=["Black","Red","White"],
+               tree_index = 3)
+trees.dtreeviz(sk_dtree, show_node_labels=True,title="Sklearn-DecisionTreeClassifier")
 
 
 print("Finished")
