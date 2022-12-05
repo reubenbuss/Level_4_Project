@@ -47,5 +47,8 @@ plt.xlabel("mean(|SHAP value|)",fontsize = 16)
 plt.show()
 
 
+viz = lgb.create_tree_digraph(model,orientation='vertical',show_info=["leaf_weight",'data_percentage','internal_value'])
+viz.view()
+
 
 print("Finished")

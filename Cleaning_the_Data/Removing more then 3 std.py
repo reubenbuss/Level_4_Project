@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 
-file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Red.csv"
+file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack.csv"
 df = pd.read_csv(file)
 
 length = 250        #number of rows in dataset
@@ -36,7 +36,7 @@ for i in range(0,length):
 
 y = m+3*std
 print(len(x),len(y))
-Species = df.iloc[1,4]
+Species = df.iloc[1,4]  
 plt.scatter(2,2,s=0.01,c=colour,label = Species + " Mangrove")
 plt.scatter(x,y,s=0.01,c = "yellow",label = "$\sigma$")
 y = m-3*std
