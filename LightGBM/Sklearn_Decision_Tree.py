@@ -64,7 +64,7 @@ def shap_plot(model):
 
 def dtree(model):
     x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.2,random_state=42)
-    viz = dtreeviz(model.booster_, 
+    viz = dtreeviz(model, 
                x_data=x_train,
                y_data=y_train,
                target_name='Species',
@@ -85,7 +85,7 @@ def grid_search(model):
     dtree_gscv.fit(X, y)
     return dtree_gscv.best_params_
 
-model = LightGBM()
+model = Sklearn()
 dtree(model)
 
 print("Finished")
