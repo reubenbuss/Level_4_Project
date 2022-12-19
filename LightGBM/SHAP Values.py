@@ -23,10 +23,12 @@ x=data.drop(["Species"],axis=1,inplace=False)
 #first100
 #x=data[['350', '356', '351', '713', '1890', '1888', '1891', '375', '1893', '2399', '1899', '355', '1651', '360', '723', '717', '1675', '2241', '352', '368', '729', '1998', '1892', '353', '1831', '1894', '728', '512', '1123', '1882', '1878', '2014', '366', '690', '664', '661', '1648', '721', '737', '1886', '513', '354', '2132', '1901', '1619', '357', '378', '1879', '361', '367', '722', '369', '725', '727', '1975', '377', '718', '1108', '1652', '736', '930', '1889', '2304', '671', '1426', '1884', '2500', '2472', '2375', '1342', '2244', '659', '662', '1407', '673', '391', '649', '1900', '732', '2498', '1984', '747', '362', '726', '2022', '1877', '2003', '669', '672', '731', '2491', '390', '1986', '1001', '2469', '1887', '2035', '1658', '1895']]
 #x=data[["1890","1998","1658","1901"]]
+#x=data[["350","400","450","500","550","600","650","700","750","800"]]
+x=data[list(map(str,list(range(350,751))))]
 
-x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.2,random_state=42)
+x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.2,random_state=2)
 
-model = lgb.LGBMClassifier(learning_rate=0.09,max_depth=-5,random_state=42)
+model = lgb.LGBMClassifier(learning_rate=0.4,max_depth=5,num_leaves=10,random_state=42)
 model.fit(x_train,y_train,eval_set=[(x_test,y_test)],
           verbose=20,eval_metric='logloss',feature_name = list(x.columns),)
 
@@ -45,7 +47,5 @@ plt.title("Shap Feature Importance",fontsize = 20)
 plt.ylabel("Fetaures", fontsize = 16)
 plt.xlabel("mean(|SHAP value|)",fontsize = 16)
 plt.show()
-
-
 
 print("Finished")
