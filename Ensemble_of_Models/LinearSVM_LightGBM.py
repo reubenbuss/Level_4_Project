@@ -56,10 +56,6 @@ x=remove_correllated_features(x,y_fit,0.90)
 print(x.columns)
 
 #LightGBM
-x = df[["2389","2184","1435","669"]] #96%
-print(x.corr())
-x=df[['1890', '721', '391', '1658']] #93%
-print(x.corr())
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
 model = lgb.LGBMClassifier(learning_rate=0.4,max_depth=5,num_leaves=10,random_state=42)
 model.fit(x_train,y_train,eval_set=[(x_test,y_test)],

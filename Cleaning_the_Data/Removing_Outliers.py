@@ -5,37 +5,29 @@ from scipy import stats
 
 file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack.csv"
 df = pd.read_csv(file)
-df = df.iloc[:,15:]
+df_new = df.iloc[:,15:]
+df_new.insert(loc=0,column="Species",value=df["Species"])
+for i in range(0,df_new.shape[0]):
+    if df_new.iat[i,0] == "Black":
+        df_new.iat[i,0] = 0.1
+    if df_new.iat[i,0] == "Red":
+        df_new.iat[i,0] = 0.5
+    if df_new.iat[i,0] == "White":
+        df_new.iat[i,0] = 0.9
 
-df = df[(df < 1).all(axis=1)] #remove any rows which have a value > 1
-df = df[(df > 0).all(axis=1)] #remove any rows which have a value < 0
-
-# m=df.mean()
-# std = df.std()
-
-# df = df[(np.abs(stats.zscore(df)) < 3).all(axis=1)] # remove any rows which have a value greater then 3 standard deviations from the mean
-# length = df.shape[0]
-
-# fig = plt.figure(dpi=2400)
-# x = list(range(350,2501))
-# for i in range(0,length):
-#     y=df.values[i]
-#     plt.ylim(0,1)
-#     plt.xlim(300,2550)
-#     plt.scatter(x,y,s=0.01,c="Green")
+print(list(df_new.iloc[:,0]))
+df_new = df_new[(df_new < 1).all(axis=1)] #remove any rows which have a value > 1
+df_new = df_new[(df_new > 0).all(axis=1)] #remove any rows which have a value < 0
+print(list(df_new.iloc[:,0]))
+for i in range(0,df_new.shape[0]):
+    if df_new.iat[i,0] == 0.1:
+        df_new.iat[i,0] = "Black"
+    if df_new.iat[i,0] == 0.5:
+        df_new.iat[i,0] = "Red"
+    if df_new.iat[i,0] == 0.9:
+        df_new.iat[i,0] = "White"
+print(list(df_new.iloc[:,0]))
 
 
-# y=m+3*std
-# plt.scatter(x,y,s=0.01,c="Red",label = "Three Standard Deviations")
-# y=m-3*std
-# plt.scatter(x,y,s=0.01,c="Red")
-# plt.scatter(2,2,s=0.01,c="Green",label = "Red Mangrove Reflectance")
-# plt.xlabel("Wavelengths (nm)")
-# plt.ylabel("Reflectance")
-# plt.legend(loc="upper right",markerscale = 100)
-# plt.title("Red Mangrove Cleaned Data")
-# fig.savefig('Red Cleaned.png', dpi=fig.dpi)
-# plt.show()
-
-df.to_csv("RedWhiteBlack Non Erroneous Data.csv")
+df_new.to_csv("RedWhiteBlack Non Erroneous Data.csv",index=False)
 print("Finished")
