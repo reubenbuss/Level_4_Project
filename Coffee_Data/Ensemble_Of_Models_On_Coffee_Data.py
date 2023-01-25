@@ -48,6 +48,7 @@ def remove_correllated_features(x,y,threshold):
     return x_new
 
 x=df[signi_feat_rfe]
+print(x.columns)
 x=remove_correllated_features(x,y_fit,0.90)
 print(x.columns)
 #print(x.corr())
@@ -63,17 +64,17 @@ print('Training accuracy {0:.4f}'.format(model.score(x_train,y_train)))
 print('Testing accuracy {0:.4f}'.format(model.score(x_test,y_test)))
 
 
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(x_test)
-sv = explainer(x_test)
-#shap.force_plot(explainer.expected_value[1], shap_values[1][0,:], x_test.iloc[0,:],matplotlib=True)
-cmap = ListedColormap(["brown","blue","green","red"])
+# explainer = shap.TreeExplainer(model)
+# shap_values = explainer.shap_values(x_test)
+# sv = explainer(x_test)
+# #shap.force_plot(explainer.expected_value[1], shap_values[1][0,:], x_test.iloc[0,:],matplotlib=True)
+# cmap = ListedColormap(["brown","blue","green","red"])
 
 
-shap.summary_plot(shap_values, x_test, class_names=model.classes_, color=cmap, show = False)               
-plt.title("SHAP Feature Importance Top 4 from 350nm to 750nm",fontsize = 20)
-plt.ylabel("Fetaures", fontsize = 16)
-plt.xlabel("mean(|SHAP value|)",fontsize = 16)
-plt.show()
+# shap.summary_plot(shap_values, x_test, class_names=model.classes_, color=cmap, show = False)               
+# plt.title("SHAP Feature Importance Top 4 from 350nm to 750nm",fontsize = 20)
+# plt.ylabel("Fetaures", fontsize = 16)
+# plt.xlabel("mean(|SHAP value|)",fontsize = 16)
+# plt.show()
 
 print("Finsihed")
