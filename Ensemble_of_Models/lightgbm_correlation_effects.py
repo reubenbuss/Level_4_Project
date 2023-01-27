@@ -81,7 +81,6 @@ def test_each_feature(all_features_df, selected_features, target_feature, labels
     score = []
     test_selected_features = selected_features.copy()
     test_selected_features.remove(target_feature)
-    print(test_selected_features)
     for i in corr_features:
         test_selected_features.append(i)
         score.append(classifier(
@@ -103,4 +102,7 @@ def find_best(reflectance_data, selected_features, species_labels, THRESHOLD):
 a = find_best(reflectance_data, ["750", "680", "351", "511"], species_labels, 0.95)
 print(classifier(reflectance_data[["750", "680", "351", "511"]],species_labels))
 print(classifier(reflectance_data[a],species_labels))
+print(a)
 print("Finshed")
+
+#['754', '680', '396', '512'] 0.8375
