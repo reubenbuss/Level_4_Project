@@ -39,8 +39,11 @@ shap_values = explainer.shap_values(x_test)
 sv = explainer(x_test)
 #shap.force_plot(explainer.expected_value[1], shap_values[1][0,:], x_test.iloc[0,:],matplotlib=True)
 cmap = ListedColormap(["red","green","black"])
+vals= np.abs(shap_values).mean(0)
 
-
+feature_importance = pd.DataFrame(list(zip(x.columns, sum(vals))), columns=['col_name','feature_importance_vals'])
+feature_importance.sort_values(by=['feature_importance_vals'], ascending=False,inplace=True)
+feature_importance.head()
 # shap.summary_plot(shap_values, x_test, class_names=model.classes_, color=cmap, show = False)               
 # plt.title("SHAP Feature Importance Top 4 from 350nm to 750nm",fontsize = 20)
 # plt.ylabel("Fetaures", fontsize = 16)
