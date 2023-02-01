@@ -5,11 +5,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib import cm 
 import shap
-import pandas as pd
-
 import lightgbm as lgb
-
-reu = 10
 
 df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack Non Erroneous Data.csv")
@@ -75,7 +71,8 @@ def correlated_features(all_features_df, target_feature, labels_df, THRESHOLD):
 def test_each_feature(all_features_df, selected_features, target_feature, labels_series, THRESHOLD):
     '''
     For a selected feature it finds all correlated features and then calls the lightgbm algorithm to get a score of it performance.
-    Repeating for all correlated features produces a series with the scores and feature names as index
+    Repeating for all correlated features 
+    Returns a series with the scores and feature names as index
     '''
     corr_features = correlated_features(
         all_features_df, target_feature, labels_series, THRESHOLD)
@@ -91,6 +88,9 @@ def test_each_feature(all_features_df, selected_features, target_feature, labels
     return scores_ser
 
 def find_best(reflectance_data, selected_features, species_labels, THRESHOLD):
+    '''
+    Returns list of best_features in order, list of all correlated features, scores of list of correlated features
+    '''
     features = []
     scores = []
     best_features = selected_features.copy()
@@ -118,8 +118,6 @@ def SHAP_values(features_df, labels_df, state=42):
     print(f'Testing accuracy {model.score(x_test,y_test)}')
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(x_test)
-    sv = explainer(x_test)
-    #shap.force_plot(explainer.expected_value[1], shap_values[1][0,:], x_test.iloc[0,:],matplotlib=True)
     cmap = ListedColormap(["red","green","black"])
 
 
@@ -137,6 +135,9 @@ def SHAP_values(features_df, labels_df, state=42):
     return feature_importance
 
 def filter_feature_importance(all_features_df,feature_importance,labels_df):
+    '''
+    returns list with the boundry of all correlated features
+    '''
     correlated = []
     to_save = []
     features = list(feature_importance["feature"])
@@ -147,6 +148,9 @@ def filter_feature_importance(all_features_df,feature_importance,labels_df):
     return to_save
 
 def plot_for_best(all_features,selected_features,labels,THRESHOLD,individual_features):
+    '''
+    Produces plot of all highly correlated features, highlinging the most optimal 4 
+    '''
     a, wavelengths, accuracy = find_best(all_features, selected_features, labels, THRESHOLD)
     individual_features = list(map(int,individual_features))
     a = list(map(int,a))
