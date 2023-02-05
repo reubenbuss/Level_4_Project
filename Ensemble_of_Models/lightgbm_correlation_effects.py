@@ -183,3 +183,6 @@ plot_for_best(reflectance_data,['754', '680', '396', '512'],species_labels,0.95,
 print("Finshed")
 
 #['754', '680', '396', '512'] 0.8375
+
+classifier(reflectance_data[['400','725','775']],species_labels)
+classifier(reflectance_data[['400','725','775','735']],species_labels)
