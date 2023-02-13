@@ -8,11 +8,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from xgboost import XGBClassifier
+#from xgboost import XGBClassifier
 from scipy.cluster.hierarchy import dendrogram
 from sklearn.cluster import AgglomerativeClustering
 from sklearn import metrics
 import lightgbm as lgb
+from sklearn.feature_selection import VarianceThreshold
 
 
 all_df = pd.read_csv(
@@ -68,6 +69,13 @@ def information_gain_test(df):
     normed_importance = [x/max(importance) for x in importance]
     return cols,normed_importance
 
+def variance_transformation(df):
+    x = df.drop(["Species"],axis=1,inplace=False)
+    selector = VarianceThreshold(0.5)
+    return selector.fit_transform(x)
+
+print(variance_transformation(rp_df).head())
+
 def ANOVA():
     '''
     Should work this out at somepoint
@@ -107,8 +115,8 @@ def classifier_importance(df,model_name):
     cols = list(map(int,x.columns.tolist()))
     return cols,importance
 
-print(classifier_test(rp_df,'xgboost'))
-print(classifier_importance(rp_df,'xgboost'))
+#print(classifier_test(rp_df,'xgboost'))
+#print(classifier_importance(rp_df,'xgboost'))
 
 def dendrogram_plot(df):
     '''
