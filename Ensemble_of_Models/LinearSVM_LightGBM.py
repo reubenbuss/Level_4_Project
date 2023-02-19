@@ -17,7 +17,7 @@ df = pd.read_csv(file)
 y=df.Species
 lb = LabelEncoder()
 y_fit = lb.fit_transform(y)
-
+print(y_fit)
 x=df.drop(["Species"],axis=1,inplace=False)
 #x=df[list(map(str,list(range(350,401))))]
 

@@ -6,6 +6,9 @@ import scipy.stats as stats
 import random
 #import statsmodels.api as sm
 
+'''
+This code doesnt do anything!
+'''
 
 
 file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Black.csv"
