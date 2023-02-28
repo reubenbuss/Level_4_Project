@@ -8,6 +8,8 @@ import shap
 import pandas as pd
 
 df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack Non Erroneous Data.csv")
+#df = pd.read_csv(
+#    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
 
 y=df.Species
 x=df.drop(["Species"],axis=1)
@@ -56,6 +58,7 @@ def algorithm(x,y,top,secs):
         scores += [score]*TOP
 
     wavelengths = list(map(int, wavelengths))
+    print(wavelengths,scores)
     plt.scatter(wavelengths,scores,cmap='viridis',c=order)
     plt.colorbar()
     plt.show()
@@ -66,6 +69,7 @@ def algorithm(x,y,top,secs):
     return list(max1["Wavelengths"])
 
 new_wavelengths = list(map(str,[1992, 1649, 1997, 1912, 2016, 1973, 2034, 1662, 2461, 2020, 1991, 476, 2246, 1671, 725, 719, 2181, 1683, 419, 391, 2357, 2065, 2354, 429, 1458, 1707, 430, 639, 2139, 434, 1736, 1712, 2258, 405, 421, 427, 1581, 696, 2154, 1586]))
+#x = df[['2007','401','1647','719']]
 x = df[new_wavelengths]
 print(algorithm(x,y,4,10))
 print("Finished")

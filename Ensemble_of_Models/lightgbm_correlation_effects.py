@@ -9,6 +9,9 @@ import lightgbm as lgb
 
 df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack Non Erroneous Data.csv")
+df = pd.read_csv(
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
+
 species_labels = df.Species
 reflectance_data = df.drop(["Species"], axis=1)
 species_dictionary = {"Black": 0.2, "Red": 0.4, "White": 0.6}
@@ -142,10 +145,10 @@ def filter_feature_importance(all_features_df,feature_importance,labels_df):
     to_save = []
     features = list(feature_importance["feature"])
     while len(features) > 0:
-        correlated += correlated_features(all_features_df, features[0], labels_df, 0.95)
+        correlated += correlated_features(all_features_df, features[0], labels_df, 0.9)
         to_save.append(features[0])
         features = [x for x in features if x not in correlated]
-    return to_save
+    return ['349']+to_save+['2501']
 
 def plot_for_best(all_features,selected_features,labels,THRESHOLD,individual_features):
     '''
@@ -165,24 +168,23 @@ def plot_for_best(all_features,selected_features,labels,THRESHOLD,individual_fea
     for i in a:
         plt.vlines(x=i,ymin=0,ymax=1,colors="green",label=f'{i}nm')
     color_individual_features = [(x-min(individual_features))/max(individual_features) for x in individual_features]
-    print(color_individual_features)
     for i in range(0,len(individual_features)-1):
         plt.fill_betweenx(x1=individual_features[i],x2=individual_features[i+1],y=[0,1],color=cmap(color_individual_features[i]),alpha=0.5)
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
           fancybox=True, shadow=True, ncol=4)
     plt.show()
 
-x = map(str,list(range(350,1000)))
+x = list(df.columns)[1:]
+#print(x)
 feature_importance_list = SHAP_values(reflectance_data[x],species_labels)
 individual_features = filter_feature_importance(reflectance_data,feature_importance_list,species_labels)
 individual_features = list(map(int,individual_features))
 individual_features.sort()
 #small_individual_features = [x for x in individual_features if x<1000]
-plot_for_best(reflectance_data,['754', '680', '396', '512'],species_labels,0.95,individual_features)
+plot_for_best(reflectance_data,['482', '719', '1887','2292'],species_labels,0.9,individual_features)
 
 print("Finshed")
 
 #['754', '680', '396', '512'] 0.8375
-
-classifier(reflectance_data[['400','725','775']],species_labels)
-classifier(reflectance_data[['400','725','775','735']],species_labels)
+#classifier(reflectance_data[['400','725','775']],species_labels)
+#classifier(reflectance_data[['400','725','775','735']],species_labels)

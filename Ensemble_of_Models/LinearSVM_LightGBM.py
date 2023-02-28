@@ -13,11 +13,12 @@ from sklearn.preprocessing import StandardScaler
 
 file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\BlackRedWhite Data Cleaned.csv"
 df = pd.read_csv(file)
+df = pd.read_csv(
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
 
 y=df.Species
 lb = LabelEncoder()
 y_fit = lb.fit_transform(y)
-print(y_fit)
 x=df.drop(["Species"],axis=1,inplace=False)
 #x=df[list(map(str,list(range(350,401))))]
 
@@ -44,8 +45,6 @@ def remove_correllated_features(x,y,threshold):
             if upper_tri.iloc[j,i] > threshold: #row then column
                 df = pd.DataFrame(list(zip(x.iloc[:,i],x.iloc[:,j],y)),columns = [x.columns[i],x.columns[j],"y"])
                 new_cor_matrix = df.corr().abs()
-                print(new_cor_matrix)
-                print(df)
                 if new_cor_matrix.iloc[0,2] > new_cor_matrix.iloc[1,2]:
                     to_drop.append(x.columns[j])
                 else: 
@@ -53,8 +52,8 @@ def remove_correllated_features(x,y,threshold):
     x_new = x.drop(to_drop, axis=1,inplace=False)
     return x_new
 
-#x=df[signi_feat_rfe]
-x=remove_correllated_features(df[["350","450"]],y_fit,0.90)
+x=df[signi_feat_rfe]
+x=remove_correllated_features(x,y_fit,0.90)
 print(x.columns)
 
 #LightGBM

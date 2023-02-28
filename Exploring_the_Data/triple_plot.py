@@ -72,5 +72,6 @@ fig.text(0.5, -0.05, 'Wavelength (nm)', ha='center', va='center', size=15)
 fig.text(0.06, 0.5, 'Reflectance', ha='center',
          va='center', rotation='vertical', size=15)
 ax3.legend(bbox_to_anchor=(0.98, -0.2), ncol=5, fontsize=12)
-plt.show()
+#plt.show()
+plt.savefig(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Graphs\triple plot v5.svg")
 print("Finished")
