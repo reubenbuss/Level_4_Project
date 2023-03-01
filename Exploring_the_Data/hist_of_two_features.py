@@ -35,5 +35,5 @@ ax2.text(0.18, 0.96, f'{a}nm', size=20, transform=ax2.transAxes, ha="right", va=
 fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.02),
     fancybox=True, shadow=True, ncol=3)
 fig.text(-0.012,0.5,'Frequency',ha='center', va='center',rotation=90,size=15)
-fig.text(0.15,-0.02,'Reflactance Values',ha='center', va='top',size=15)
+fig.text(0.15,-0.02,'Reflectance Values',ha='center', va='top',size=15)
 plt.show()
