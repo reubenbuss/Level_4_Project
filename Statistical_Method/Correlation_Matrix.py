@@ -3,23 +3,29 @@ import pandas as pd
 
 file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\BlackRedWhite Data Cleaned.csv"
 df = pd.read_csv(file)
+df = pd.read_csv(
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
+
 
 y=df.Species
 
-#x=df.drop(["Species"],axis=1,inplace=False)
+x=df.drop(["Species"],axis=1,inplace=False)
 #x=df[["1892","671","1652","720"]]
 #x=df[["1441","680","725","366"]]
 #x=df[["750","680","351","390"]]
-x=df[list(map(str,list(range(350,401))))]
+#x=df[list(map(str,list(range(350,401))))]
 
 def create_heatmap(df):
-    f = plt.figure(dpi=2400)
+    f = plt.figure()
     plt.matshow(df.corr(), fignum=f.number)
-    plt.xticks(range(0,len(df.columns),430), range(350,len(df.columns)+350,430), fontsize=14, rotation=45)
-    plt.yticks(range(0,len(df.columns),430), range(350,len(df.columns)+350,430), fontsize=14)
+    plt.xticks(range(0,df.shape[1],30),list(map(int,list(df.columns)[::30])), fontsize=14, rotation=45)
+    plt.yticks(range(0,df.shape[1],30),list(map(int,list(df.columns)[::30])), fontsize=14)
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=14)
     plt.title('Correlation Matrix 350nm to 2500nm', fontsize=16);
+    #plt.text(x=0.8, y=1.3, s='Reduced Precison')
+    plt.ylabel('Wavelength (nm)')
+    plt.xlabel('Wavelength (nm)')
     plt.show()
 
 def get_redundant_pairs(df):

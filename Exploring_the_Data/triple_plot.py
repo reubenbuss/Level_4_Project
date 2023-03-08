@@ -16,6 +16,8 @@ all_df = all_df.sample(frac=1)
 rwb_df = rwb_df.sample(frac=1)
 clean_df = clean_df.sample(frac=1)
 
+new_df = clean_df[['Species','395','749','1427','2232']]
+
 
 def list_maker(df):
     '''
@@ -32,7 +34,7 @@ def list_maker(df):
     return columns_list, value_list, colour_list
 
 
-c_cols, c_vals, c_colours = list_maker(clean_df)
+c_cols, c_vals, c_colours = list_maker(new_df)
 rwb_cols, rwb_vals, rwb_colours = list_maker(rwb_df)
 all_cols, all_vals, all_colours = list_maker(all_df)
 
@@ -73,5 +75,5 @@ fig.text(0.06, 0.5, 'Reflectance', ha='center',
          va='center', rotation='vertical', size=15)
 ax3.legend(bbox_to_anchor=(0.98, -0.2), ncol=5, fontsize=12)
 #plt.show()
-plt.savefig(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Graphs\triple plot v5.svg")
+plt.savefig(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Graphs\triple plot v5 new swag.svg")
 print("Finished")

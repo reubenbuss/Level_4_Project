@@ -40,3 +40,10 @@ plt.scatter(cols,f_bw_r,c='red',marker=".")
 plt.scatter(cols,f_rw_b,c='black',marker=".")
 
 plt.show()
+
+
+stats.levene(df_b, df_r, df_w, center='median')
+
+print('Finished')
+
+

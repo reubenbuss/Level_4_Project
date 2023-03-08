@@ -13,6 +13,8 @@ from sklearn.feature_selection import mutual_info_classif, VarianceThreshold, RF
 from sklearn.svm import SVC
 from sklearn.cluster import AgglomerativeClustering
 from sklearn import metrics
+from sklearn.decomposition import PCA, FactorAnalysis
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from xgboost import XGBClassifier
 from skrebate import ReliefF
@@ -37,8 +39,13 @@ model_dict = {'lightgbm': lgb.LGBMClassifier, 'random forest': RandomForestClass
               'xgboost': XGBClassifier, 'gradient boosted': GradientBoostingClassifier, 'adaboost': AdaBoostClassifier, "svm": SVC}
 params = {'lightgbm': {'learning_rate': 0.4, 'max_depth': 5, 'num_leaves': 10, 'random_state': 42}, 'random forest': {'n_estimators': 100, 'random_state': 42},
           'xgboost': {'n_estimators': 100, 'random_state': 42}, 'gradient boosted': {'n_estimators': 100, 'random_state': 42}, 'adaboost': {'n_estimators': 100, 'random_state': 42}, "svm": {'kernel': 'linear'}}
+dim_dict = {'PCA':PCA,'FactorAnalysis':FactorAnalysis}
+
 
 def average(a):
+    '''
+    return average of list a
+    '''
     return sum(a)/len(a)
 
 def label_to_float(labels_df):
@@ -60,6 +67,19 @@ def float_to_label(labels_df):
     for i in range(0, len(labels_df)):
         new_labels.append(dictionary_unpacked[labels_df.iat[i]])
     return np.array(new_labels)
+
+def duplicate_df(df):
+    '''
+    duplicates all columns of the dataframe
+    '''
+    x = df.drop(['Species'],axis=1,inplace=False)
+    y = df.Species
+    x_new = x.copy(deep=True)
+    columns = list(x.columns)
+    new_columns = list(map(str,[x+2150 for x in list(map(int,columns))]))
+    x_new = x_new.rename(columns = dict(zip(columns,new_columns)))
+    x_final = pd.concat((y,x,x_new), axis=1)
+    return x_final
 
 def fisher_test(df):
     '''
@@ -125,6 +145,18 @@ def anova_test(df):
     p_all = [x/(max(list(p_all))) for x in list(p_all)]
     return f_all
 
+def dimensionality_reduction(df,model):
+    '''
+    return df with 4 features using dimensionality reduction techniques
+    '''
+    X = df.drop(['Species'],axis=1,inplace=False)
+    y = df.Species
+    model = dim_dict[model](n_components=4)
+    X = pd.DataFrame(model.fit_transform(X,y))
+    return pd.concat((y,X),axis=1)
+
+#print(dimensionality_reduction(rp_df,'PCA').head())
+
 def stats_plot(df):
     '''
     Produces a plot for the statistical methods
@@ -137,18 +169,21 @@ def stats_plot(df):
     all_methods = [anova,info,releif]
     normalised_all_methods = [((x-min(x))/(max(x)-min(x))) for x in all_methods]
     count = 0
-    names = ['ANOVA','Information Gain','Relief']
+    names = ['ANOVA','Information Gain','ReliefF']
     colours = ['black','red','green']
+    fig = plt.figure(dpi=240)
     for i in normalised_all_methods:
         plt.plot(wavelengths,i,alpha=0.8,label=names[count],c=colours[count])
         #plt.scatter(wavelengths,i,alpha=0.8,label=names[count],fc=colours[count],edgecolors=None,s=0.5)
         count += 1
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
         fancybox=True, shadow=True, ncol=3)
+    plt.xlabel('Wavelength(nm)')
+    plt.ylabel('Normalised F-Statistic')
     #plt.savefig(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Graphs\Filter Method\Filter methods combined.svg")
     plt.show()
     
-#stats_plot(rp_df)
+stats_plot(rp_df)
 #information_gain_test(rp_df)
 
 def sequential_feature_selection(df, model, final_number_of_features):
@@ -172,7 +207,7 @@ def recursive_feature_selection(df, model, final_number_of_features, steps):
               step=steps, verbose=1)
     return sfs.fit_transform(X,y),sfs.get_support(indices=True)
 
-def rfe_with_crossvaliation(df):
+def rfe_with_crossvaliation_plot(df):
     '''
     boxplot of each 
     '''
@@ -202,8 +237,6 @@ def rfe_with_crossvaliation(df):
     plt.ylabel('Accuracy (10 splits, 3 repeats)')
     plt.show()
 
-rfe_with_crossvaliation(rp_df[['Species', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']])
-
 def classifier_test(df, model_name):
     '''
     Returns model prediction score
@@ -223,7 +256,6 @@ def classifier_test(df, model_name):
     else:
         return metrics.accuracy_score(y_test, y_pred)
 
-
 def classifier_importance(df, model_name):
     '''
     Returns model feature importance list and wavelengths list
@@ -239,6 +271,12 @@ def classifier_importance(df, model_name):
     cols = list(map(int, x.columns.tolist()))
     return cols, importance
 
+# cols, importance = classifier_importance(duplicate_df(rp_df),'random forest')
+# cols1, importance1 = classifier_importance(rp_df,'random forest')
+# plt.plot(cols,importance)
+# plt.plot(cols1,importance1)
+# plt.vlines(x=2500,ymin=0,ymax=0.03,colors='red')
+# plt.show()
 
 def dendrogram_plot(df):
     '''
@@ -299,6 +337,27 @@ def boxplot_from_crossvalidation(df):
     plt.ylabel('Accuracy (10 splits, 3 repeats)')
     plt.show()
 
+def boxplot_from_crossvalidation_of_dim_reduct(df):
+    '''
+    Produces a boxplot of all reduction techniques accuracy using cross validation on lightgbm
+    '''
+    results = []
+    names = []
+    for i,j in dim_dict.items():
+        df_old = df.copy()
+        names.append(i)
+        df_new = dimensionality_reduction(df_old,i)
+        X = df_new[list(df_new.columns)[1:]]
+        y = df_new.Species
+        results.append(evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y))
+    plt.figure(dpi=240,figsize=(3,6))
+    plt.boxplot(results, labels=names, showmeans=True)
+    plt.xticks(rotation=45, ha='center')
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.show()
+
 #boxplot_from_crossvalidation(rp_df)
+#rfe_with_crossvaliation(rp_df)
+#boxplot_from_crossvalidation_of_dim_reduct(rp_df)
 
 print("Finished")
