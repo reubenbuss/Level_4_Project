@@ -16,7 +16,7 @@ df = pd.read_csv(file)
 df = df.iloc[:,15:]
 
 df =df[(np.abs(df)<1).all(axis=1)]
-df = df[(np.abs(stats.zscore(df)) < 2).all(axis=1)]
+#df = df[(np.abs(stats.zscore(df)) < 2).all(axis=1)]
 
 # for i in range(15,2165):
 #     df_filtered = df[(df.iloc[:,i] < 1) & (df.iloc[:,i] > 0)]

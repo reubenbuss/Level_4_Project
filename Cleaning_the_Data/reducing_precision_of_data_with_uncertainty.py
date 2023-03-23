@@ -1,7 +1,7 @@
 import pandas as pd
 
 df = pd.read_csv(
-    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack Non Erroneous Data.csv")
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack without meta.csv")
 
 # cols = list(df.columns)
 # new_cols = list(range(350, 702, 3)) + list(range(707, 1398, 6)) + \
@@ -72,35 +72,35 @@ df1 = df.assign(**{
     str(maincol): df.loc[:, combo].mean(axis=1)
     for maincol, combo in zip(new_cols, combos)
 }).loc[:, map(str, new_cols[:-1])]
-    
-df1.to_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision4.csv", index=False)
+df1 = pd.concat([df.Species,df1],axis=1)    
+df1.to_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision5.csv", index=False)
 
 print("Finished")
 
 
-import pandas
-df1 = pandas.DataFrame({
-    '1': [1, 2, 3, 4], 
-    '2': [5, 6, 7, 8], 
-    '3': [9, 10, 11, 12], 
-    '4': [13, 14, 15, 16],
-    '5': [17, 18, 19, 20], 
-    '6': [21, 22, 23, 24], 
-    '7': [25, 26, 27, 28],
-})
+# import pandas
+# df1 = pandas.DataFrame({
+#     '1': [1, 2, 3, 4], 
+#     '2': [5, 6, 7, 8], 
+#     '3': [9, 10, 11, 12], 
+#     '4': [13, 14, 15, 16],
+#     '5': [17, 18, 19, 20], 
+#     '6': [21, 22, 23, 24], 
+#     '7': [25, 26, 27, 28],
+# })
 
-# df2 should have columns 1,2,5 which are the mean of df1 columns [1],[2,3,4],[5,6,7]
+# # df2 should have columns 1,2,5 which are the mean of df1 columns [1],[2,3,4],[5,6,7]
 
-new_cols = [1, 2, 5, 8]
-combos = []
-for i, val in enumerate(new_cols):
-    if val != 8:
-        #All the column names are integers as str
-        combos.append(list(map(str, range(new_cols[i], new_cols[i+1]))))
-print(combos)
-df2 = df1.assign(**{
-    str(maincol): df1.loc[:, combo].mean(axis="columns")
-    for maincol, combo in zip(new_cols, combos)
-}).loc[:, map(str, new_cols[:-1])]
-print(df2)
-print(df1)
+# new_cols = [1, 2, 5, 8]
+# combos = []
+# for i, val in enumerate(new_cols):
+#     if val != 8:
+#         #All the column names are integers as str
+#         combos.append(list(map(str, range(new_cols[i], new_cols[i+1]))))
+# print(combos)
+# df2 = df1.assign(**{
+#     str(maincol): df1.loc[:, combo].mean(axis="columns")
+#     for maincol, combo in zip(new_cols, combos)
+# }).loc[:, map(str, new_cols[:-1])]
+# print(df2)
+# print(df1)

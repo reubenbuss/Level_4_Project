@@ -26,9 +26,9 @@ all_df = pd.read_csv(
 rwb_df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack Non Erroneous Data.csv")
 rp_df = pd.read_csv(
-    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv")
 df = pd.read_csv(
-    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best.csv")
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision5.csv")
 
 labels = {"Black": "black", "White": "green",
           "Red": "red", "na": 'blue', 'Mud': 'brown'}
