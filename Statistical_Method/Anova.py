@@ -7,7 +7,7 @@ import scipy.stats as stats
 
 rp_df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
-
+rp_df = pd.read_csv(r'C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv')
 df_b = rp_df.query('Species == "Black"').iloc[:,1:]
 df_r = rp_df.query('Species == "Red"').iloc[:,1:]
 df_w = rp_df.query('Species == "White"').iloc[:,1:]
@@ -40,9 +40,6 @@ plt.scatter(cols,f_bw_r,c='red',marker=".")
 plt.scatter(cols,f_rw_b,c='black',marker=".")
 
 plt.show()
-
-
-stats.levene(df_b, df_r, df_w, center='median')
 
 print('Finished')
 

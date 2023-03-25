@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 from scipy.stats import median_abs_deviation
 import scipy.stats as stats
@@ -14,7 +15,8 @@ from sklearn.svm import SVC
 from sklearn.cluster import AgglomerativeClustering
 from sklearn import metrics
 from sklearn.decomposition import PCA, FactorAnalysis
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+import mpl_scatter_density 
 
 from xgboost import XGBClassifier
 from skrebate import ReliefF
@@ -183,7 +185,7 @@ def stats_plot(df):
     #plt.savefig(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Graphs\Filter Method\Filter methods combined.svg")
     plt.show()
     
-stats_plot(rp_df)
+#stats_plot(rp_df)
 #information_gain_test(rp_df)
 
 def sequential_feature_selection(df, model, final_number_of_features):
@@ -341,6 +343,10 @@ def boxplot_from_crossvalidation_of_dim_reduct(df):
     '''
     Produces a boxplot of all reduction techniques accuracy using cross validation on lightgbm
     '''
+    df_columns = list(df.columns)
+    df_columns_int_species_dropped = list(map(int,df_columns[1:]))
+    to_keep = [x for x in df_columns_int_species_dropped if x < 1000]
+    df = df[['Species']+list(map(str,to_keep))]
     results = []
     names = []
     for i,j in dim_dict.items():
@@ -356,8 +362,208 @@ def boxplot_from_crossvalidation_of_dim_reduct(df):
     plt.ylabel('Accuracy (10 splits, 3 repeats)')
     plt.show()
 
+def crossvalidation_boxplot_of_different_top_4(df,list_of_top,names):
+    '''
+    Produces a boxplot of different sets of top 4 wavelengths using cross validation on lightgbm
+    '''
+    results = []
+    plt.figure(dpi=300,figsize=(6.5,6))
+    for i,val in enumerate(list_of_top):
+        X = df[val]
+        y = df.Species
+        res = evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y)
+        results.append(res)
+        plt.text(1.25+i,average(res),'\n'.join(val),ha='left', va='center',size=12)
+    plt.boxplot(results, labels=names, showmeans=True)
+    plt.xticks(rotation=45, ha='center')
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.show()
+
+def make_groups(df):
+    '''
+    makes highly correlated groups
+    '''
+    corr_matrix = df.corr(method = 'pearson',numeric_only=True)
+    corr_matrix_columns = list(map(int,corr_matrix.columns))
+
+    points = []
+    heights = []
+    for i in corr_matrix_columns:
+        correlated = [x for x in corr_matrix_columns if corr_matrix.loc[f'{i}',f'{x}'] > 0.9]
+        points.append(correlated)
+        heights.append([i]*(len(correlated)))
+    groups = []
+    for i in points:
+        if len(groups) == 0:
+            groups.append(i)
+        else:
+            add = 0
+            swap = 0
+            for j in groups:
+                if len(set(j).intersection(set(i)))/len(set(j).union(set(i))) < 0.1:
+                    add += 1
+                if set(j).intersection(set(i)) == set(j) and len(i) > len(j):
+                    swap += 1
+            if add == len(groups):
+                groups.append(i)
+            if swap == len(groups):
+                groups.remove(j)
+                groups.append(i)
+    return groups
+
+def groups_plot_using_density_plot(df):
+    # "Viridis-like" colormap with white background
+    white_viridis = LinearSegmentedColormap.from_list('white_viridis', [(0, '#ffffff'),(1e-20, '#440053'),(0.2, '#404388'),(0.4, '#2a788e'),(0.6, '#21a784'),(0.8, '#78d151'),(1, '#fde624'),], N=256)
+    df_columns = list(df.columns)
+    df_columns_int_species_dropped = list(map(int,df_columns[1:]))
+    to_keep = [x for x in df_columns_int_species_dropped if x < 1000]
+    df = df[['Species']+list(map(str,to_keep))]
+    groups = make_groups(df)
+    selected_wavelengths = ['389', '512', '719', '767']
+    selected_wavelengths = [389, 512, 719, 767]
+    selected_groups = [groups[0],groups[1],groups[4],groups[6]]
+    #selected_groups = [[389,392,395],[512,515,518]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y).tolist())
+            res_per_group += res
+            position_per_group += ([j]*30)
+        results += (res_per_group)
+        positions += (position_per_group)
+        print('here')
+    fig = plt.figure(figsize=(12,6),dpi=300)
+    ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+    # for i,val in enumerate(positions):
+    #     ax.scatter_density(val, results[i], cmap=white_viridis)
+    ax.scatter_density(positions, results, cmap=white_viridis,dpi = 5)
+    ax.set_xlim(300, 1050)
+    ax.set_ylim(0, 1)
+    # for i,val in enumerate(groups):
+    #     ax.scatter(val,[i]*(len(val)))
+    plt.show()
+
+def groups_plot_using_boxplot(df):
+    # "Viridis-like" colormap with white background
+    white_viridis = LinearSegmentedColormap.from_list('white_viridis', [(0, '#ffffff'),(1e-20, '#440053'),(0.2, '#404388'),(0.4, '#2a788e'),(0.6, '#21a784'),(0.8, '#78d151'),(1, '#fde624'),], N=256)
+    df_columns = list(df.columns)
+    df_columns_int_species_dropped = list(map(int,df_columns[1:]))
+    to_keep = [x for x in df_columns_int_species_dropped if x < 1000]
+    df = df[['Species']+list(map(str,to_keep))]
+    groups = make_groups(df)
+    selected_wavelengths = ['389', '512', '719', '767']
+    selected_wavelengths = [389, 512, 719, 767]
+    #selected_wavelengths = [389, 512]
+    selected_groups = [groups[0],groups[1],groups[4],groups[6]]
+    #selected_groups = [[389,392,395],[512,515,518]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y).tolist())
+            res_per_group.append(res)
+            position_per_group.append(j)
+        results.append(res_per_group)
+        positions.append(position_per_group)
+        print('here')
+    plt.figure(figsize=(12,6),dpi=300)
+    first = plt.boxplot(results[0],positions=positions[0],patch_artist=True)
+    second = plt.boxplot(results[1],positions=positions[1],patch_artist=True)
+    third = plt.boxplot(results[2],positions=positions[2],patch_artist=True)
+    forth = plt.boxplot(results[3],positions=positions[3],patch_artist=True)
+    for box in first['boxes']:
+        box.set(facecolor = 'darkgreen' )
+        box.set(color='darkgreen', linewidth=2)
+    for whisker in first['whiskers']:
+        whisker.set(color ='forestgreen',linewidth = 1.5,linestyle ="-")
+    for flier in first['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in first['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in first['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in second['boxes']:
+        box.set(facecolor = 'royalblue' )
+        box.set(color='royalblue', linewidth=2)
+    for whisker in second['whiskers']:
+        whisker.set(color ='cornflowerblue',linewidth = 1.5,linestyle ="-")
+    for flier in second['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in second['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in second['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in third['boxes']:
+        box.set(facecolor = 'darkorange' )
+        box.set(color='darkorange', linewidth=2)
+    for whisker in third['whiskers']:
+        whisker.set(color ='orange',linewidth = 1.5,linestyle ="-")
+    for flier in third['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in third['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in third['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in forth['boxes']:
+        box.set(facecolor = 'darkturquoise' )
+        box.set(color='darkturquoise', linewidth=2)
+    for whisker in forth['whiskers']:
+        whisker.set(color ='turquoise',linewidth = 1.5,linestyle ="-")
+    for flier in forth['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in forth['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in forth['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xlabel('Wavelengths (nm)')
+    plt.xlim(340,1010)
+    plt.xticks([350,400,450,500,550,600,650,700,750,800,850,900,950,1000],labels=[350,400,450,500,550,600,650,700,750,800,850,900,950,1000])
+    plt.axvspan(350,506 , ymin=0, ymax=0.12, color='forestgreen',alpha=0.5) # 1 ##
+    plt.axvspan(497,524 , ymin=0, ymax=0.12, color='cornflowerblue',alpha=0.5) # 2 ##
+    plt.axvspan(515,605 , ymin=0, ymax=0.1, color='plum',alpha=0.5) #3 
+    plt.axvspan(692,707 , ymin=0, ymax=0.1, color='plum',alpha=0.5) #3 
+    plt.axvspan(590,692 , ymin=0, ymax=0.1, color='yellow',alpha=0.5) #4 
+    plt.axvspan(701,725 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #5 ##
+    plt.axvspan(725,749 , ymin=0, ymax=0.1, color='lime',alpha=0.5) #6 
+    plt.axvspan(737,947 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #7 ##
+    plt.vlines(x=[389, 512, 719, 767],ymin=0.5,ymax=0.6,colors = ['darkgreen','royalblue','darkorange','darkturquoise'])
+    plt.ylim(0.5,0.95)
+    plt.show()
+
 #boxplot_from_crossvalidation(rp_df)
 #rfe_with_crossvaliation(rp_df)
+#boxplot_from_crossvalidation_of_dim_reduct(rp_df)
+list_of_top_4s = [['389', '512', '719', '767'],['368', '518', '680', '755'],['518','671','755','953'],['512','674','773','989']]
+names = ['Correlation\n+Feature Importance','SVM+Correlation','Correlation\n+ANOVA','LightGBM \n RFE']
+#crossvalidation_boxplot_of_different_top_4(rp_df,list_of_top_4s,names)
+
+#groups_plot_using_boxplot(rp_df)
 #boxplot_from_crossvalidation_of_dim_reduct(rp_df)
 
 print("Finished")
