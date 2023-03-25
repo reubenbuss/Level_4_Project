@@ -317,13 +317,13 @@ def ANOVA_feature_selection_on_groups():
     return table
 
 
-def ROC_Curve_for_selected_wavelengths():
-
+def ROC_Curve_for_selected_wavelengths(df):
     '''
     Produces a roc curve for selected wavelengths
     '''
     selected_ones = ['389', '512', '719', '767']
-
+    x=df.drop(['Species'],axis=1,inplace=False)
+    y=df.Species
     (X_train,X_test,y_train,y_test,) = train_test_split(x[selected_ones], y, test_size=0.3, stratify=y, random_state=42)
     model = lgb.LGBMClassifier(learning_rate=0.4,max_depth=5,num_leaves=10,random_state=42)
     y_score = model.fit(X_train, y_train).predict_proba(X_test)
@@ -346,8 +346,6 @@ def ROC_Curve_for_selected_wavelengths():
     #plt.title("One-vs-Rest ROC curves:\nBlack vs (Red & White)")
     plt.legend()
     plt.show()
-
-print(lightgbm_feature_selection_on_groups())
 
 print('Finished')
 
