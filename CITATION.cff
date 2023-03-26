@@ -12,7 +12,6 @@ type: software
 authors:
   - given-names: Reuben
     family-names: Buss
-    name-suffix: Mr
     email: ReubenBuss@hotmail.com
     affiliation: Durham University
 repository-code: 'https://github.com/reubenbuss/Level_4_Project'
