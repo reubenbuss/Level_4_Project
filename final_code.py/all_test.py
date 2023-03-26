@@ -37,10 +37,10 @@ labels = {"Black": "black", "White": "green",
 all_df = all_df.drop(["SpectraID", 'WhiteReference', 'ContactProbe', 'FibreOptic', 'SPAD_1', 'SPAD_2', 'SPAD_3',
                      'SPAD_Ave', 'Location', 'Lat', 'Long', 'StandAge', 'StandHealth', 'SurfaceDescription'], axis=1, inplace=False)
 species_dictionary = {"Black": 0, "Red": 1, "White": 2}
-model_dict = {'lightgbm': lgb.LGBMClassifier, 'random forest': RandomForestClassifier,
-              'xgboost': XGBClassifier, 'gradient boosted': GradientBoostingClassifier, 'adaboost': AdaBoostClassifier, "svm": SVC}
-params = {'lightgbm': {'learning_rate': 0.4, 'max_depth': 5, 'num_leaves': 10, 'random_state': 42}, 'random forest': {'n_estimators': 100, 'random_state': 42},
-          'xgboost': {'n_estimators': 100, 'random_state': 42}, 'gradient boosted': {'n_estimators': 100, 'random_state': 42}, 'adaboost': {'n_estimators': 100, 'random_state': 42}, "svm": {'kernel': 'linear'}}
+model_dict = {'LightGBM': lgb.LGBMClassifier, 'Random Forest': RandomForestClassifier,
+              'XGBoost': XGBClassifier, 'Gradient Boosted': GradientBoostingClassifier, 'AdaBoost': AdaBoostClassifier, "SVM": SVC}
+params = {'LightGBM': {'learning_rate': 0.4, 'max_depth': 5, 'num_leaves': 10, 'random_state': 42}, 'Random Forest': {'n_estimators': 100, 'random_state': 42},
+          'XGBoost': {'n_estimators': 100, 'random_state': 42}, 'Gradient Boosted': {'n_estimators': 100, 'random_state': 42}, 'AdaBoost': {'n_estimators': 100, 'random_state': 42}, "SVM": {'kernel': 'linear','C':100000}}
 dim_dict = {'PCA':PCA,'FactorAnalysis':FactorAnalysis}
 
 
@@ -217,7 +217,7 @@ def rfe_with_crossvaliation_plot(df):
     names = []
     features = []
     for i,j in model_dict.items():
-        if i != 'xgboost':
+        if i != 'XGBoost':
             names.append(i)
             new_X,feature = recursive_feature_selection(df,j(**params[i]),4,10)
             print(feature)
@@ -230,13 +230,11 @@ def rfe_with_crossvaliation_plot(df):
     for i,val in enumerate(features):
         s = list(map(int,val))
         a = [list(df.columns)[j+1] for j in s]
-        plt.text(x=1.3+i,y=means[i]-0.03,s='\n'.join(a))
-        plt.text(x=0.6+i,y=means[i]-0.005,s=str(round(means[i],2)))
+        plt.text(x=1.3+i,y=means[i]-0.02,s='\n'.join(a),fontsize=15)
+        plt.text(x=0.55+i,y=means[i]-0.003,s=str(round(means[i],2)),fontsize=15)
         new_features.append(a)
-
-    plt.title('rfe top 4 cross validated')
-    plt.xticks(rotation=45, ha='center')
-    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xticks(rotation=45, ha='center',fontsize=20)
+    plt.ylabel('Accuracy (10 splits, 3 repeats)',fontsize=20)
     plt.show()
 
 def classifier_test(df, model_name):
@@ -335,8 +333,8 @@ def boxplot_from_crossvalidation(df):
             results.append(evaluate_model(j(**params[i]),df[list(rp_df.columns)[1:]],df.Species))
     plt.figure(dpi=240)
     plt.boxplot(results, labels=names, showmeans=True)
-    plt.xticks(rotation=45, ha='center')
-    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xticks(rotation=45, ha='center',fontsize=20)
+    plt.ylabel('Accuracy (10 splits, 3 repeats)',fontsize = 20)
     plt.show()
 
 def boxplot_from_crossvalidation_of_dim_reduct(df):
@@ -565,5 +563,6 @@ names = ['Correlation\n+Feature Importance','SVM+Correlation','Correlation\n+ANO
 
 #groups_plot_using_boxplot(rp_df)
 #boxplot_from_crossvalidation_of_dim_reduct(rp_df)
+rfe_with_crossvaliation_plot(rp_df)
 
 print("Finished")

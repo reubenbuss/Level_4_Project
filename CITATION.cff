@@ -1,0 +1,29 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Python scripts for optimising mangrove tree species
+  identification
+message: >-
+  Optimizing Mangrove Tree Species Identification with
+  Reflectance Spectra, UAV Imagery and Machine Learning
+type: software
+authors:
+  - given-names: Reuben
+    family-names: Buss
+    name-suffix: Mr
+    email: ReubenBuss@hotmail.com
+    affiliation: Durham University
+repository-code: 'https://github.com/reubenbuss/Level_4_Project'
+abstract: >-
+  Optimizing  red, black and white mangrove tree species
+  identification for with reflectance spectra from
+  Paramaribo Suriname, for remote sensing using UAV imagery.
+  Analysed using machine learning in python.  
+keywords:
+  - Python
+  - Pandas
+  - Scikit-Learn
+  - Numpy
+  - Matplotlib
