@@ -1,7 +1,7 @@
 import pandas as pd
 
 df = pd.read_csv(
-    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\RedWhiteBlack without meta.csv")
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Calibrated_data_outliers_removed.csv")
 
 # cols = list(df.columns)
 # new_cols = list(range(350, 702, 3)) + list(range(707, 1398, 6)) + \
@@ -73,7 +73,7 @@ df1 = df.assign(**{
     for maincol, combo in zip(new_cols, combos)
 }).loc[:, map(str, new_cols[:-1])]
 df1 = pd.concat([df.Species,df1],axis=1)    
-df1.to_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision5.csv", index=False)
+df1.to_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Calibrated_data_reduced_precision.csv", index=False)
 
 print("Finished")
 

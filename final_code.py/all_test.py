@@ -2,13 +2,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from random import sample
 
 from scipy.stats import median_abs_deviation
 import scipy.stats as stats
 from scipy.cluster.hierarchy import dendrogram
 
 from skfeature.function.similarity_based import fisher_score
-from sklearn.model_selection import train_test_split, cross_val_score, RepeatedStratifiedKFold
+from sklearn.model_selection import train_test_split, cross_val_score, RepeatedStratifiedKFold, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.feature_selection import mutual_info_classif, VarianceThreshold, RFE, SequentialFeatureSelector
 from sklearn.svm import SVC
@@ -16,7 +17,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn import metrics
 from sklearn.decomposition import PCA, FactorAnalysis
 
-import mpl_scatter_density 
+import shap
 
 from xgboost import XGBClassifier
 from skrebate import ReliefF
@@ -31,16 +32,18 @@ rp_df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv")
 df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision5.csv")
+cal_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Calibrated_data_reduced_precision.csv")
+coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Coffee\Categorised_Coffee_Data_reduced_precision.csv")
+mangrove_and_coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_and_Coffee_data.csv")
 
-labels = {"Black": "black", "White": "green",
-          "Red": "red", "na": 'blue', 'Mud': 'brown'}
+labels = {"Black": "black", "White": "green","Red": "red", "na": 'blue', 'Mud': 'brown','green_control':'blue','Rust':'magenta','Rust_Canopy':'lawngreen','AribicavarGeisha':'cyan'}
 all_df = all_df.drop(["SpectraID", 'WhiteReference', 'ContactProbe', 'FibreOptic', 'SPAD_1', 'SPAD_2', 'SPAD_3',
                      'SPAD_Ave', 'Location', 'Lat', 'Long', 'StandAge', 'StandHealth', 'SurfaceDescription'], axis=1, inplace=False)
-species_dictionary = {"Black": 0, "Red": 1, "White": 2}
+species_dictionary = {"Black": 0, "Red": 1, "White": 2,'green_control':3,'Rust':4,'Rust_Canopy':5,'AribicavarGeisha':6}
 model_dict = {'LightGBM': lgb.LGBMClassifier, 'Random Forest': RandomForestClassifier,
               'XGBoost': XGBClassifier, 'Gradient Boosted': GradientBoostingClassifier, 'AdaBoost': AdaBoostClassifier, "SVM": SVC}
-params = {'LightGBM': {'learning_rate': 0.4, 'max_depth': 5, 'num_leaves': 10, 'random_state': 42}, 'Random Forest': {'n_estimators': 100, 'random_state': 42},
-          'XGBoost': {'n_estimators': 100, 'random_state': 42}, 'Gradient Boosted': {'n_estimators': 100, 'random_state': 42}, 'AdaBoost': {'n_estimators': 100, 'random_state': 42}, "SVM": {'kernel': 'linear','C':100000}}
+params = {'LightGBM': {'learning_rate': 0.4, 'max_depth': 5, 'num_leaves': 10, 'random_state': 42}, 'Random Forest': {'n_estimators': 100,'criterion':'entropy' ,'random_state': 42},
+          'XGBoost': {'n_estimators': 100, 'random_state': 42}, 'Gradient Boosted': {'n_estimators': 100, 'random_state': 42}, 'AdaBoost': {'n_estimators': 100, 'random_state': 42}, "SVM": {'kernel': 'linear','C':10000}}
 dim_dict = {'PCA':PCA,'FactorAnalysis':FactorAnalysis}
 
 
@@ -141,7 +144,11 @@ def anova_test(df):
     df_b = df.query('Species == "Black"').iloc[:,1:]
     df_r = df.query('Species == "Red"').iloc[:,1:]
     df_w = df.query('Species == "White"').iloc[:,1:]
-    f_all,p_all = stats.f_oneway(df_b.to_numpy(),df_r.to_numpy(),df_w.to_numpy())
+    df_gc = df.query('Species == "green_control"').iloc[:,1:]
+    df_rust = df.query('Species == "Rust"').iloc[:,1:]
+    df_rc = df.query('Species == "Rust_Canopy"').iloc[:,1:]
+    df_ag = df.query('Species == "AribicavarGeisha"').iloc[:,1:]
+    f_all,p_all = stats.f_oneway(df_b.to_numpy(),df_r.to_numpy(),df_w.to_numpy(),df_gc.to_numpy(),df_rust.to_numpy(),df_rc.to_numpy(),df_ag.to_numpy())
     print(list(df.columns)[list(p_all).index(max(list(p_all)))])
     f_all = [x/(max(list(f_all))) for x in list(f_all)]
     p_all = [x/(max(list(p_all))) for x in list(p_all)]
@@ -184,7 +191,8 @@ def stats_plot(df):
     plt.ylabel('Normalised F-Statistic')
     #plt.savefig(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Graphs\Filter Method\Filter methods combined.svg")
     plt.show()
-    
+
+#stats_plot(mangrove_and_coffee_df)
 #stats_plot(rp_df)
 #information_gain_test(rp_df)
 
@@ -328,13 +336,13 @@ def boxplot_from_crossvalidation(df):
     results = []
     names = []
     for i,j in model_dict.items():
-        if i != 'xgboost':
+        if i != 'XGBoost':
             names.append(i)
             results.append(evaluate_model(j(**params[i]),df[list(rp_df.columns)[1:]],df.Species))
     plt.figure(dpi=240)
     plt.boxplot(results, labels=names, showmeans=True)
-    plt.xticks(rotation=45, ha='center',fontsize=20)
-    plt.ylabel('Accuracy (10 splits, 3 repeats)',fontsize = 20)
+    plt.xticks(rotation=45, ha='center',fontsize=15)
+    plt.ylabel('Accuracy (10 splits, 3 repeats)',fontsize = 15)
     plt.show()
 
 def boxplot_from_crossvalidation_of_dim_reduct(df):
@@ -462,6 +470,212 @@ def groups_plot_using_boxplot(df):
     groups = make_groups(df)
     selected_wavelengths = ['389', '512', '719', '767']
     selected_wavelengths = [389, 512, 719, 767]
+    selected_wavelengths = ['389','512','635','767']
+    selected_wavelengths = [389,512,635,767]
+    #selected_wavelengths = [389, 512]
+    selected_groups = [groups[0],groups[1],groups[3],groups[6]]
+    #selected_groups = [[389,392,395],[512,515,518]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['LightGBM'](**params['LightGBM']),X,y).tolist())
+            res_per_group.append(res)
+            position_per_group.append(j)
+        results.append(res_per_group)
+        positions.append(position_per_group)
+        print('here')
+    plt.figure(figsize=(12,6),dpi=300)
+    first = plt.boxplot(results[0],positions=positions[0],patch_artist=True)
+    second = plt.boxplot(results[1],positions=positions[1],patch_artist=True)
+    third = plt.boxplot(results[2],positions=positions[2],patch_artist=True)
+    forth = plt.boxplot(results[3],positions=positions[3],patch_artist=True)
+    for box in first['boxes']:
+        box.set(facecolor = 'darkgreen' )
+        box.set(color='darkgreen', linewidth=2)
+    for whisker in first['whiskers']:
+        whisker.set(color ='forestgreen',linewidth = 1.5,linestyle ="-")
+    for flier in first['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in first['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in first['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in second['boxes']:
+        box.set(facecolor = 'royalblue' )
+        box.set(color='royalblue', linewidth=2)
+    for whisker in second['whiskers']:
+        whisker.set(color ='cornflowerblue',linewidth = 1.5,linestyle ="-")
+    for flier in second['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in second['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in second['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in third['boxes']:
+        box.set(facecolor = 'darkorange' )
+        box.set(color='darkorange', linewidth=2)
+    for whisker in third['whiskers']:
+        whisker.set(color ='orange',linewidth = 1.5,linestyle ="-")
+    for flier in third['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in third['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in third['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in forth['boxes']:
+        box.set(facecolor = 'darkturquoise' )
+        box.set(color='darkturquoise', linewidth=2)
+    for whisker in forth['whiskers']:
+        whisker.set(color ='turquoise',linewidth = 1.5,linestyle ="-")
+    for flier in forth['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in forth['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in forth['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xlabel('Wavelengths (nm)')
+    plt.xlim(340,1010)
+    plt.xticks([350,400,450,500,550,600,650,700,750,800,850,900,950,1000],labels=[350,400,450,500,550,600,650,700,750,800,850,900,950,1000])
+    plt.axvspan(350,506 , ymin=0, ymax=0.12, color='forestgreen',alpha=0.5) # 1 ##
+    plt.axvspan(497,524 , ymin=0, ymax=0.12, color='cornflowerblue',alpha=0.5) # 2 ##
+    plt.axvspan(515,605 , ymin=0, ymax=0.1, color='plum',alpha=0.5) #3 
+    plt.axvspan(692,707 , ymin=0, ymax=0.1, color='plum',alpha=0.5) #3 
+    plt.axvspan(590,692 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #4 ##
+    plt.axvspan(701,725 , ymin=0, ymax=0.1, color='yellow',alpha=0.5) #5 
+    plt.axvspan(725,749 , ymin=0, ymax=0.1, color='lime',alpha=0.5) #6 
+    plt.axvspan(737,947 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #7 ##
+    plt.vlines(x=selected_wavelengths,ymin=0.4,ymax=0.5,colors = ['darkgreen','royalblue','darkorange','darkturquoise'])
+    plt.ylim(0.4,0.85)
+    plt.show()
+
+def svm_groups_plot_using_boxplot(df):
+    # "Viridis-like" colormap with white background
+    white_viridis = LinearSegmentedColormap.from_list('white_viridis', [(0, '#ffffff'),(1e-20, '#440053'),(0.2, '#404388'),(0.4, '#2a788e'),(0.6, '#21a784'),(0.8, '#78d151'),(1, '#fde624'),], N=256)
+    df_columns = list(df.columns)
+    df_columns_int_species_dropped = list(map(int,df_columns[1:]))
+    to_keep = [x for x in df_columns_int_species_dropped if x < 1000]
+    df = df[['Species']+list(map(str,to_keep))]
+    groups = make_groups(df)
+    selected_wavelengths = ['353','644','701','911']
+    selected_wavelengths = [353,644,701,911]
+    #selected_wavelengths = [389, 512]
+    selected_groups = [groups[0],groups[2]+groups[4],groups[3],groups[6]]
+    #selected_groups = [[389,392,395],[512,515,518]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['SVM'](**params['SVM']),X,y).tolist())
+            res_per_group.append(res)
+            position_per_group.append(j)
+        results.append(res_per_group)
+        positions.append(position_per_group)
+        print('here')
+    plt.figure(figsize=(12,6),dpi=300)
+    first = plt.boxplot(results[0],positions=positions[0],patch_artist=True)
+    second = plt.boxplot(results[1],positions=positions[1],patch_artist=True)
+    third = plt.boxplot(results[2],positions=positions[2],patch_artist=True)
+    forth = plt.boxplot(results[3],positions=positions[3],patch_artist=True)
+    for box in first['boxes']:
+        box.set(facecolor = 'darkgreen' )
+        box.set(color='darkgreen', linewidth=2)
+    for whisker in first['whiskers']:
+        whisker.set(color ='forestgreen',linewidth = 1.5,linestyle ="-")
+    for flier in first['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in first['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in first['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in second['boxes']:
+        box.set(facecolor = 'violet' )
+        box.set(color='violet', linewidth=2)
+    for whisker in second['whiskers']:
+        whisker.set(color ='plum',linewidth = 1.5,linestyle ="-")
+    for flier in second['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in second['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in second['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in third['boxes']:
+        box.set(facecolor = 'yellow' )
+        box.set(color='yellow', linewidth=2)
+    for whisker in third['whiskers']:
+        whisker.set(color ='lightyellow',linewidth = 1.5,linestyle ="-")
+    for flier in third['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in third['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in third['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in forth['boxes']:
+        box.set(facecolor = 'darkturquoise' )
+        box.set(color='darkturquoise', linewidth=2)
+    for whisker in forth['whiskers']:
+        whisker.set(color ='turquoise',linewidth = 1.5,linestyle ="-")
+    for flier in forth['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in forth['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in forth['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xlabel('Wavelengths (nm)')
+    plt.xlim(340,1010)
+    plt.xticks([350,400,450,500,550,600,650,700,750,800,850,900,950,1000],labels=[350,400,450,500,550,600,650,700,750,800,850,900,950,1000])
+    plt.axvspan(350,506 , ymin=0, ymax=0.12, color='forestgreen',alpha=0.5) # 1 ##
+    plt.axvspan(497,524 , ymin=0, ymax=0.1, color='cornflowerblue',alpha=0.5) # 2 
+    plt.axvspan(515,605 , ymin=0, ymax=0.12, color='plum',alpha=0.5) #3 ##
+    plt.axvspan(692,707 , ymin=0, ymax=0.12, color='plum',alpha=0.5) #3 ##
+    plt.axvspan(590,692 , ymin=0, ymax=0.12, color='yellow',alpha=0.5) #4 ##
+    plt.axvspan(701,725 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #5 ##
+    plt.axvspan(725,749 , ymin=0, ymax=0.1, color='lime',alpha=0.5) #6 
+    plt.axvspan(737,947 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #7 ##
+    plt.vlines(x=[353,644,701,911],ymin=0.35,ymax=0.45,colors = ['darkgreen','royalblue','darkorange','darkturquoise'])
+    plt.ylim(0.35,0.85)
+    plt.show()
+
+def groups_plot_using_boxplot_with_shap(df):
+    # "Viridis-like" colormap with white background
+    white_viridis = LinearSegmentedColormap.from_list('white_viridis', [(0, '#ffffff'),(1e-20, '#440053'),(0.2, '#404388'),(0.4, '#2a788e'),(0.6, '#21a784'),(0.8, '#78d151'),(1, '#fde624'),], N=256)
+    df_columns = list(df.columns)
+    df_columns_int_species_dropped = list(map(int,df_columns[1:]))
+    to_keep = [x for x in df_columns_int_species_dropped if x < 1000]
+    df = df[['Species']+list(map(str,to_keep))]
+    groups = make_groups(df)
+    selected_wavelengths = ['389', '512', '719', '767']
+    selected_wavelengths = [389, 512, 719, 767]
     #selected_wavelengths = [389, 512]
     selected_groups = [groups[0],groups[1],groups[4],groups[6]]
     #selected_groups = [[389,392,395],[512,515,518]]
@@ -482,6 +696,14 @@ def groups_plot_using_boxplot(df):
             res = (evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y).tolist())
             res_per_group.append(res)
             position_per_group.append(j)
+            # model = lgb.LGBMClassifier(learning_rate=0.4,max_depth=5,num_leaves=10,random_state=42)
+            # model.fit(X,y,verbose=0,eval_metric='logloss',feature_name = list(X.columns))
+            # explainer = shap.TreeExplainer(model)
+            # shap_values = explainer.shap_values(X)
+            # shap_values_black += shap_values[0]
+            # shap_values_red += shap_values[1]
+            # shap_values_white += shap_values[2]
+
         results.append(res_per_group)
         positions.append(position_per_group)
         print('here')
@@ -554,15 +776,278 @@ def groups_plot_using_boxplot(df):
     plt.ylim(0.5,0.95)
     plt.show()
 
-#boxplot_from_crossvalidation(rp_df)
+def groups_plot_using_boxplot_coffee(df):
+    # "Viridis-like" colormap with white background
+    #white_viridis = LinearSegmentedColormap.from_list('white_viridis', [(0, '#ffffff'),(1e-20, '#440053'),(0.2, '#404388'),(0.4, '#2a788e'),(0.6, '#21a784'),(0.8, '#78d151'),(1, '#fde624'),], N=256)
+    groups = make_groups(df)
+    selected_wavelengths = ['350', '521', '701', '881']
+    selected_wavelengths = [350, 521, 701, 881]
+    #selected_wavelengths = [389, 512]
+    selected_groups = [groups[0],groups[1],groups[2],groups[4]]
+    #selected_groups = [[389,392,395],[512,515,518]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['LightGBM'](**params['LightGBM']),X,y).tolist())
+            res_per_group.append(res)
+            position_per_group.append(j)
+        results.append(res_per_group)
+        positions.append(position_per_group)
+        print('here')
+    plt.figure(figsize=(12,6),dpi=300)
+    first = plt.boxplot(results[0],positions=positions[0],patch_artist=True)
+    second = plt.boxplot(results[1],positions=positions[1],patch_artist=True)
+    third = plt.boxplot(results[2],positions=positions[2],patch_artist=True)
+    forth = plt.boxplot(results[3],positions=positions[3],patch_artist=True)
+    for box in first['boxes']:
+        box.set(facecolor = 'darkgreen' )
+        box.set(color='darkgreen', linewidth=2)
+    for whisker in first['whiskers']:
+        whisker.set(color ='forestgreen',linewidth = 1.5,linestyle ="-")
+    for flier in first['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in first['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in first['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in second['boxes']:
+        box.set(facecolor = 'royalblue' )
+        box.set(color='royalblue', linewidth=2)
+    for whisker in second['whiskers']:
+        whisker.set(color ='cornflowerblue',linewidth = 1.5,linestyle ="-")
+    for flier in second['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in second['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in second['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in third['boxes']:
+        box.set(facecolor = 'darkorange' )
+        box.set(color='darkorange', linewidth=2)
+    for whisker in third['whiskers']:
+        whisker.set(color ='orange',linewidth = 1.5,linestyle ="-")
+    for flier in third['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in third['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in third['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in forth['boxes']:
+        box.set(facecolor = 'darkturquoise' )
+        box.set(color='darkturquoise', linewidth=2)
+    for whisker in forth['whiskers']:
+        whisker.set(color ='turquoise',linewidth = 1.5,linestyle ="-")
+    for flier in forth['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in forth['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in forth['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xlabel('Wavelengths (nm)')
+    plt.xlim(340,910)
+    plt.xticks([350,400,450,500,550,600,650,700,750,800,850,900],labels=[350,400,450,500,550,600,650,700,750,800,850,900])
+    plt.axvspan(350,509 , ymin=0, ymax=0.12, color='forestgreen',alpha=0.5) # 1 ##
+    plt.axvspan(503,533 , ymin=0, ymax=0.12, color='cornflowerblue',alpha=0.5) # 2 ##
+    plt.axvspan(521,638 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #3 ##
+    plt.axvspan(695,719 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #3 ##
+    plt.axvspan(713,731 , ymin=0, ymax=0.1, color='yellow',alpha=0.5) #4 
+    plt.axvspan(731,761 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #5 ##
+    plt.axvspan(803,881 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #5 ##
+    plt.vlines(x=[350, 521, 701, 881],ymin=0.75,ymax=0.8,colors = ['darkgreen','royalblue','darkorange','darkturquoise'])
+    plt.ylim(0.75,1)
+    plt.show()
+
+def groups_plot_using_boxplot_coffee_and_mangroves(df):
+    # "Viridis-like" colormap with white background
+    #white_viridis = LinearSegmentedColormap.from_list('white_viridis', [(0, '#ffffff'),(1e-20, '#440053'),(0.2, '#404388'),(0.4, '#2a788e'),(0.6, '#21a784'),(0.8, '#78d151'),(1, '#fde624'),], N=256)
+    groups = make_groups(df)
+    selected_wavelengths = ['350', '521', '701', '881']
+    selected_wavelengths = [350, 521, 719, 881]
+    #selected_wavelengths = [389, 512]
+    selected_groups = [groups[0],groups[2],groups[6],groups[7]]
+    #selected_groups = [[389,392,395],[512,515,518]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['LightGBM'](**params['LightGBM']),X,y).tolist())
+            res_per_group.append(res)
+            position_per_group.append(j)
+        results.append(res_per_group)
+        positions.append(position_per_group)
+        print('here')
+    plt.figure(figsize=(12,6),dpi=300)
+    first = plt.boxplot(results[0],positions=positions[0],patch_artist=True)
+    second = plt.boxplot(results[1],positions=positions[1],patch_artist=True)
+    third = plt.boxplot(results[2],positions=positions[2],patch_artist=True)
+    forth = plt.boxplot(results[3],positions=positions[3],patch_artist=True)
+    for box in first['boxes']:
+        box.set(facecolor = 'darkgreen' )
+        box.set(color='darkgreen', linewidth=2)
+    for whisker in first['whiskers']:
+        whisker.set(color ='forestgreen',linewidth = 1.5,linestyle ="-")
+    for flier in first['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in first['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in first['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in second['boxes']:
+        box.set(facecolor = 'royalblue' )
+        box.set(color='royalblue', linewidth=2)
+    for whisker in second['whiskers']:
+        whisker.set(color ='cornflowerblue',linewidth = 1.5,linestyle ="-")
+    for flier in second['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in second['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in second['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in third['boxes']:
+        box.set(facecolor = 'darkorange' )
+        box.set(color='darkorange', linewidth=2)
+    for whisker in third['whiskers']:
+        whisker.set(color ='orange',linewidth = 1.5,linestyle ="-")
+    for flier in third['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in third['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in third['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in forth['boxes']:
+        box.set(facecolor = 'darkturquoise' )
+        box.set(color='darkturquoise', linewidth=2)
+    for whisker in forth['whiskers']:
+        whisker.set(color ='turquoise',linewidth = 1.5,linestyle ="-")
+    for flier in forth['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in forth['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in forth['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xlabel('Wavelengths (nm)')
+    plt.xlim(340,910)
+    plt.xticks([350,400,450,500,550,600,650,700,750,800,850,900],labels=[350,400,450,500,550,600,650,700,750,800,850,900])
+    plt.axvspan(350,455 , ymin=0, ymax=0.12, color='forestgreen',alpha=0.5) # 1 ##
+    plt.axvspan(446,506 , ymin=0, ymax=0.1, color='plum',alpha=0.5) # 2 
+    plt.axvspan(500,536 , ymin=0, ymax=0.12, color='cornflowerblue',alpha=0.5) #3 ##
+    plt.axvspan(527,647 , ymin=0, ymax=0.1, color='red',alpha=0.5) #4 
+    plt.axvspan(638,692 , ymin=0, ymax=0.1, color='yellow',alpha=0.5) #5
+    plt.axvspan(689,707 , ymin=0, ymax=0.1, color='magenta',alpha=0.5) #6 
+    plt.axvspan(707,731 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #7 ##
+    plt.axvspan(725,881 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #8 ##
+    plt.vlines(x=[350, 521, 719, 881],ymin=0.7,ymax=0.75,colors = ['darkgreen','royalblue','darkorange','darkturquoise'])
+    plt.ylim(0.7,0.95)
+    plt.show()
+
+def cross_validation_confusion_matrix(df,model_name='LightGBM'):
+    conf_matrix_list_of_arrays = []
+    X = df.drop(['Species'],axis=1,inplace=False)
+    y = df.Species
+    cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=42)
+    for i, (train_index, test_index) in enumerate(cv.split(X,y)):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+        model = model_dict[model_name](**params[model_name])
+        model.fit(X_train, y_train)
+        conf_matrix = metrics.confusion_matrix(y_test, model.predict(X_test))
+        conf_matrix_list_of_arrays.append(conf_matrix)
+    mean_of_conf_matrix_arrays = np.mean(conf_matrix_list_of_arrays, axis=0)
+    cm = mean_of_conf_matrix_arrays.astype('float') / mean_of_conf_matrix_arrays.sum(axis=1)[:, np.newaxis]
+    disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=y.unique())
+    disp.plot(xticks_rotation=45)
+
+
+def balanced_cross_validation(df,model_name='LightGBM',p=0.7,repeats=3):
+    X_old = df.drop(['Species'],axis=1,inplace=False)
+    y_old = df.Species
+    labels = y.unique()
+    lengths = []
+    for i in labels:
+        subset = df.query('Species ==' + f'"{str(i)}"')
+        lengths.append(subset.shape[0])
+    min_len = min(lengths)
+    for i in range(0,len(repeats)):
+        new = []
+        for j,vals in enumerate(lengths):
+            indices = sample(range(0,vals),min_len)
+            new.append(df.query('Species =='+ f'"{str(labels[j])}"').iloc)
+        df = pd.concat([])
+        conf_matrix_list_of_arrays = []
+        X = df.drop(['Species'],axis=1,inplace=False)
+        y = df.Species
+        cv = StratifiedKFold(n_splits=10, random_state=42)
+        for i, (train_index, test_index) in enumerate(cv.split(X,y)):
+            X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+            model = model_dict[model_name](**params[model_name])
+            model.fit(X_train, y_train)
+            conf_matrix = metrics.confusion_matrix(y_test, model.predict(X_test))
+            conf_matrix_list_of_arrays.append(conf_matrix)
+    mean_of_conf_matrix_arrays = np.mean(conf_matrix_list_of_arrays, axis=0)
+    cm = mean_of_conf_matrix_arrays.astype('float') / mean_of_conf_matrix_arrays.sum(axis=1)[:, np.newaxis]
+    disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=y.unique())
+    disp.plot(xticks_rotation=45)
+
+#balanced_cross_validation(rp_df)
+#boxplot_from_crossvalidation(rwb_df)
+
 #rfe_with_crossvaliation(rp_df)
 #boxplot_from_crossvalidation_of_dim_reduct(rp_df)
 list_of_top_4s = [['389', '512', '719', '767'],['368', '518', '680', '755'],['518','671','755','953'],['512','674','773','989']]
 names = ['Correlation\n+Feature Importance','SVM+Correlation','Correlation\n+ANOVA','LightGBM \n RFE']
 #crossvalidation_boxplot_of_different_top_4(rp_df,list_of_top_4s,names)
 
-#groups_plot_using_boxplot(rp_df)
+#groups_plot_using_boxplot(rwb_df)
 #boxplot_from_crossvalidation_of_dim_reduct(rp_df)
-rfe_with_crossvaliation_plot(rp_df)
+#rfe_with_crossvaliation_plot(cal_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']])
+print(list(rp_df.columns))
+#svm_groups_plot_using_boxplot(rp_df)
 
+#groups_plot_using_boxplot(rp_df)
+
+
+#groups_plot_using_boxplot_coffee(coffee_df)
+
+#rfe_with_crossvaliation_plot(coffee_df)
+
+#groups_plot_using_boxplot_coffee_and_mangroves(mangrove_and_coffee_df)
+
+#what are the accuracies of each species and has the ones for mangroves changed with the introduction of coffee data?
+
+cross_validation_confusion_matrix(rp_df)
+#print(list(mangrove_and_coffee_df.columns))
 print("Finished")
+
+#389,521,569,761

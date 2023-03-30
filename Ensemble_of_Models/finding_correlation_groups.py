@@ -5,16 +5,22 @@ import numpy as np
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import RocCurveDisplay
+from sklearn.svm import SVC
 
 import lightgbm as lgb
 
-df = pd.read_csv(r'C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv')
+mangrove_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv")
+
+#coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Coffee\Categorised_Coffee_Data_reduced_precision.csv")
+
+#df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_and_Coffee_data.csv")
 
 #select max wavelength
-df_columns = list(df.columns)
+df_columns = list(mangrove_df.columns)
 df_columns_int_species_dropped = list(map(int,df_columns[1:]))
 to_keep = [x for x in df_columns_int_species_dropped if x < 1000]
-df = df[['Species']+list(map(str,to_keep))]
+df = mangrove_df[['Species']+list(map(str,to_keep))]
+#df = pd.concat([mangrove_df,coffee_df],axis=0)
 
 corr_matrix = df.corr(method = 'pearson', numeric_only=True)
 corr_matrix_columns = list(map(int,corr_matrix.columns))
@@ -276,6 +282,32 @@ def lightgbm_feature_selection_on_groups():
         for j in i:
             a.append(importance_dict[j])
         a_max = max(a)
+        print(a_max)
+        most_important_in_each_group.append(importance_dict_reverse[a_max])
+    most_important_in_each_group_str = list(map(str,most_important_in_each_group))
+    return most_important_in_each_group_str
+
+def svm_feature_selection_on_groups():
+    '''
+    returns list of most important features in each group using feature selection in svm
+    '''
+    groups = make_groups()
+    x = df.drop(["Species"], axis=1, inplace=False)
+    x_columns = list(map(int,x.columns))
+    y = df.Species
+    model = SVC(kernel='linear',C=10000)
+    model.fit(x, y)
+    importance = model.coef_.tolist()[0]
+    importance_dict = dict(zip(x_columns,importance))
+    importance_dict_reverse = dict(zip(importance,x_columns))
+
+    most_important_in_each_group = []
+    for i in groups:
+        a=[]
+        for j in i:
+            a.append(importance_dict[j])
+        a_max = max(a)
+        print(a_max)
         most_important_in_each_group.append(importance_dict_reverse[a_max])
     most_important_in_each_group_str = list(map(str,most_important_in_each_group))
     return most_important_in_each_group_str
@@ -305,9 +337,6 @@ def ANOVA_feature_selection_on_groups():
     f_br_w,_ = stats.f_oneway(df_br.to_numpy(),df_w.to_numpy())
     f_bw_r,_ = stats.f_oneway(df_bw.to_numpy(),df_r.to_numpy())
     f_rw_b,_ = stats.f_oneway(df_rw.to_numpy(),df_b.to_numpy())
-    f_br_w = [x/(max(list(f_br_w))) for x in list(f_br_w)]
-    f_bw_r = [x/(max(list(f_bw_r))) for x in list(f_bw_r)]
-    f_rw_b = [x/(max(list(f_rw_b))) for x in list(f_rw_b)]
     w_scores_dict = dict(zip(corr_matrix_columns,f_br_w))
     r_scores_dict = dict(zip(corr_matrix_columns,f_bw_r))
     b_scores_dict = dict(zip(corr_matrix_columns,f_rw_b))
@@ -315,7 +344,6 @@ def ANOVA_feature_selection_on_groups():
     for i in most_important_in_each_group:
         table.append([i,b_scores_dict[i],r_scores_dict[i],w_scores_dict[i]])
     return table
-
 
 def ROC_Curve_for_selected_wavelengths(df):
     '''
@@ -347,5 +375,10 @@ def ROC_Curve_for_selected_wavelengths(df):
     plt.legend()
     plt.show()
 
+print(ANOVA_feature_selection_on_groups())
+
+#print(make_groups())
+#print(make_groups())
+#print(lightgbm_feature_selection_on_groups())
 print('Finished')
 

@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import stats
 
-file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision5.csv"
+file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Calibrated_data.csv"
 
 df = pd.read_csv(file)
 df_new = df.copy()
@@ -32,5 +32,5 @@ for i in range(0,df_new.shape[0]):
     if df_new.iat[i,0] == 0.3:
         df_new.iat[i,0] = "White"
 
-df_new.to_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv",index=False)
+df_new.to_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Calibrated_data_outliers_removed.csv",index=False)
 print("Finished")
