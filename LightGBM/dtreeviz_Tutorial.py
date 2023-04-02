@@ -4,20 +4,21 @@ from sklearn import tree
 from sklearn.preprocessing import LabelEncoder
 from dtreeviz.trees import *
 
-file = r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\BlackRedWhite Data Cleaned.csv"
-data = pd.read_csv(file)
+rp_df = pd.read_csv(
+    r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv")
 
-y=data.Species
+y=rp_df.Species
 lb = LabelEncoder()
 y = lb.fit_transform(y)
 
-#x=data.drop(["Species"],axis=1,inplace=False)
-x=data[["750","680","351","390"]]
-x=data[["1892","671","1652","720"]]
+print(list(rp_df.columns))
+
+x=rp_df[['1997','2442','677','1637']]
+x = rp_df.drop(['Species'],axis=1,inplace=False)
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
 # fit the classifier
-clf = tree.DecisionTreeClassifier(max_depth=3, random_state=42)
+clf = tree.DecisionTreeClassifier(max_depth=2, random_state=42)
 clf.fit(X_train, y_train)
 
 viz = dtreeviz(clf, 
@@ -26,6 +27,5 @@ viz = dtreeviz(clf,
                target_name='Mangrove Species',
                feature_names=x.columns, 
                class_names=list(["Black Mangrove","Red Mangrove","White Mangrove"]), 
-               title="Decision Tree",
                colors = {"classes":[None,None,None,["Black","Red","Green"]]})
 viz

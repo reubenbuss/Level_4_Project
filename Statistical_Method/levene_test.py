@@ -14,7 +14,7 @@ df_w = rp_df.query('Species == "White"')
 colours = ['black','red','green']
 
 
-fig = plt.figure(figsize = (8,2),dpi=2400)
+fig = plt.figure(figsize = (8,2),dpi=300)
 length_b = len(df_b.columns)
 
 

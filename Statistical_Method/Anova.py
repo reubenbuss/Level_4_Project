@@ -8,7 +8,7 @@ import scipy.stats as stats
 rp_df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_3_best_outliers_removed.csv")
 rp_df = pd.read_csv(r'C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_data_reduced_precision_5_best_outliers_removed.csv')
-rp_df = rp_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']]
+#rp_df = rp_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']]
 coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Coffee\Categorised_Coffee_Data_reduced_precision.csv")
 mangrove_and_coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_and_Coffee_data.csv")
 
@@ -83,16 +83,16 @@ plt.figure(dpi=300,figsize=(8,4))
 # plt.plot(cols_mc,f_mc_w,c='green',label='White Mangrove')
 # plt.plot(cols_mc,f_mc_rust,c='magenta',label='Rust')
 
-# plt.plot(cols,f_all,c='grey',label='ANOVA')
-# plt.plot(cols,f_br_w,c='green',label='White Mangrove')
-# plt.plot(cols,f_bw_r,c='red',label='Red Mangrove')
-# plt.plot(cols,f_rw_b,c='black',label='Black Mangrove')
+plt.plot(cols,f_all,c='grey',label='ANOVA')
+plt.plot(cols,f_br_w,c='green',label='White Mangrove')
+plt.plot(cols,f_bw_r,c='red',label='Red Mangrove')
+plt.plot(cols,f_rw_b,c='black',label='Black Mangrove')
 
-plt.plot(cols_coffee,f_cof_all,c='grey',label='ANOVA')
-plt.plot(cols_coffee,f_cof_ab,c='cyan',label='Geisha')
-plt.plot(cols_coffee,f_cof_rc,c='lawngreen',label='Rust Canopy')
-plt.plot(cols_coffee,f_cof_rust,c='magenta',label='Rust')
-plt.plot(cols_coffee,f_cof_gc,c='blue',label='Green Control')
+# plt.plot(cols_coffee,f_cof_all,c='grey',label='ANOVA')
+# plt.plot(cols_coffee,f_cof_ab,c='cyan',label='Geisha')
+# plt.plot(cols_coffee,f_cof_rc,c='lawngreen',label='Rust Canopy')
+# plt.plot(cols_coffee,f_cof_rust,c='magenta',label='Rust')
+# plt.plot(cols_coffee,f_cof_gc,c='blue',label='Green Control')
 
 
 plt.xlabel('Wavelength (nm)')
