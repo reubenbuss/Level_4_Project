@@ -12,6 +12,8 @@ rp_df = pd.read_csv(r'C:\Users\reube\OneDrive - Durham University\Documents\Year
 coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Coffee\Categorised_Coffee_Data_reduced_precision.csv")
 mangrove_and_coffee_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_and_Coffee_data.csv")
 
+mangrove_and_coffee_df = mangrove_and_coffee_df.query('Species != "Rust" & Species != "Rust_Canopy"')
+
 #print(mangrove_and_coffee_df.Species.unique())
 
 df_b = rp_df.query('Species == "Black"').iloc[:,1:]
@@ -47,8 +49,8 @@ df_mc_b = mangrove_and_coffee_df.query('Species == "Black"').iloc[:,1:]
 df_mc_r = mangrove_and_coffee_df.query('Species == "Red"').iloc[:,1:]
 df_mc_w = mangrove_and_coffee_df.query('Species == "White"').iloc[:,1:]
 df_mc_gc = mangrove_and_coffee_df.query('Species == "green_control"').iloc[:,1:]
-df_mc_rust = mangrove_and_coffee_df.query('Species == "Rust"').iloc[:,1:]
-df_mc_rc = mangrove_and_coffee_df.query('Species == "Rust_Canopy"').iloc[:,1:]
+#df_mc_rust = mangrove_and_coffee_df.query('Species == "Rust"').iloc[:,1:]
+#df_mc_rc = mangrove_and_coffee_df.query('Species == "Rust_Canopy"').iloc[:,1:]
 df_mc_ab = mangrove_and_coffee_df.query('Species == "AribicavarGeisha"').iloc[:,1:]
 df_mc__b = mangrove_and_coffee_df.query('Species != "Black"').iloc[:,1:]
 df_mc__r = mangrove_and_coffee_df.query('Species != "Red"').iloc[:,1:]
@@ -57,13 +59,14 @@ df_mc__gc = mangrove_and_coffee_df.query('Species != "green_control"').iloc[:,1:
 df_mc__rust = mangrove_and_coffee_df.query('Species != "Rust"').iloc[:,1:]
 df_mc__rc = mangrove_and_coffee_df.query('Species != "Rust_Canopy"').iloc[:,1:]
 df_mc__ab = mangrove_and_coffee_df.query('Species != "AribicavarGeisha"').iloc[:,1:]
-f_mc_all,_ = stats.f_oneway(df_mc_b.to_numpy(),df_mc_r.to_numpy(),df_mc_w.to_numpy(),df_mc_gc.to_numpy(),df_mc_rust.to_numpy(),df_mc_rc.to_numpy(),df_mc_ab.to_numpy())
+
+f_mc_all,_ = stats.f_oneway(df_mc_b.to_numpy(),df_mc_r.to_numpy(),df_mc_w.to_numpy(),df_mc_gc.to_numpy(),df_mc_ab.to_numpy())
 f_mc_b,_ = stats.f_oneway(df_mc_b.to_numpy(),df_mc__b.to_numpy())
 f_mc_r,_ = stats.f_oneway(df_mc_r.to_numpy(),df_mc__r.to_numpy())
 f_mc_w,_ = stats.f_oneway(df_mc_w.to_numpy(),df_mc__w.to_numpy())
 f_mc_gc,_ = stats.f_oneway(df_mc_gc.to_numpy(),df_mc__gc.to_numpy())
-f_mc_rust,_ = stats.f_oneway(df_mc_rust.to_numpy(),df_mc__rust.to_numpy())
-f_mc_rc,p_rc = stats.f_oneway(df_mc_rc.to_numpy(),df_mc__rc.to_numpy())
+#f_mc_rust,_ = stats.f_oneway(df_mc_rust.to_numpy(),df_mc__rust.to_numpy())
+#f_mc_rc,p_rc = stats.f_oneway(df_mc_rc.to_numpy(),df_mc__rc.to_numpy())
 f_mc_ab,_ = stats.f_oneway(df_mc_ab.to_numpy(),df_mc__ab.to_numpy())
 
 
@@ -74,19 +77,19 @@ cols_mc = list(map(int,mangrove_and_coffee_df.columns.tolist()[1:]))
 
 plt.figure(dpi=300,figsize=(8,4))
 
-# plt.plot(cols_mc,f_mc_all,c='grey',label='ANOVA')
-# plt.plot(cols_mc,f_mc_gc,c='blue',label='Green Control')
-# plt.plot(cols_mc,f_mc_b,c='black',label='Black Mangrove')
-# plt.plot(cols_mc,f_mc_rc,c='lawngreen',label='Rust Canopy')
-# plt.plot(cols_mc,f_mc_r,c='red',label='Red Mangrove')
-# plt.plot(cols_mc,f_mc_ab,c='cyan',label='Geisha')
-# plt.plot(cols_mc,f_mc_w,c='green',label='White Mangrove')
-# plt.plot(cols_mc,f_mc_rust,c='magenta',label='Rust')
+plt.plot(cols_mc,f_mc_all,c='grey',label='ANOVA')
+plt.plot(cols_mc,f_mc_gc,c='blue',label='Green Control')
+plt.plot(cols_mc,f_mc_b,c='black',label='Black Mangrove')
+#plt.plot(cols_mc,f_mc_rc,c='lawngreen',label='Rust Canopy')
+plt.plot(cols_mc,f_mc_r,c='red',label='Red Mangrove')
+plt.plot(cols_mc,f_mc_ab,c='cyan',label='Geisha')
+plt.plot(cols_mc,f_mc_w,c='green',label='White Mangrove')
+#plt.plot(cols_mc,f_mc_rust,c='magenta',label='Rust')
 
-plt.plot(cols,f_all,c='grey',label='ANOVA')
-plt.plot(cols,f_br_w,c='green',label='White Mangrove')
-plt.plot(cols,f_bw_r,c='red',label='Red Mangrove')
-plt.plot(cols,f_rw_b,c='black',label='Black Mangrove')
+# plt.plot(cols,f_all,c='grey',label='ANOVA')
+# plt.plot(cols,f_br_w,c='green',label='White Mangrove')
+# plt.plot(cols,f_bw_r,c='red',label='Red Mangrove')
+# plt.plot(cols,f_rw_b,c='black',label='Black Mangrove')
 
 # plt.plot(cols_coffee,f_cof_all,c='grey',label='ANOVA')
 # plt.plot(cols_coffee,f_cof_ab,c='cyan',label='Geisha')
@@ -98,7 +101,7 @@ plt.plot(cols,f_rw_b,c='black',label='Black Mangrove')
 plt.xlabel('Wavelength (nm)')
 plt.ylabel('F Statistic')
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
-    fancybox=True, shadow=True, ncol=4)
+    fancybox=True, shadow=True, ncol=3)
 plt.show()
 
 print('Finished')

@@ -5,23 +5,23 @@ import matplotlib.pyplot as plt
 rp_df = pd.read_csv(
     r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Coffee\Categorised_Coffee_Data_reduced_precision.csv")
 rp_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Documents\Year 4\Project\Data\Mangrove_and_Coffee_data.csv")
-fig = plt.figure(figsize=(12, 3),dpi=240)
+fig = plt.figure(figsize=(12, 3),dpi=300)
 
-rp_df = rp_df.query('Species != "Rust" & Species != "Rust_Canopy"')
+#rp_df = rp_df.query('Species != "Rust" & Species != "Rust_Canopy"')
 #print(rp_df.Species.unique())
 #print(list(rp_df.columns))
 ax1 = fig.add_axes([0.5, 0.1, 0.5, 0.9],yticks=[])
 ax2 = fig.add_axes([0, 0.1, 0.5, 0.9],yticks=[])
 ax3 = fig.add_axes([1,0.1,0.5,0.9],yticks=[])
 
-print(list(rp_df.columns))
-a='479'
-b='602'
-c='680'
+#print(list(rp_df.columns))
+a='350'
+b='575'
+c='881'
 
 first = rp_df[['Species',a]].query(f'@rp_df["{a}"]<0.125')
-second = rp_df[['Species',b]].query(f'@rp_df["{b}"]<0.2')
-third = rp_df[['Species',c]].query(f'@rp_df["{c}"]<0.1')
+second = rp_df[['Species',b]]#.query(f'@rp_df["{b}"]<0.2')
+third = rp_df[['Species',c]]#.query(f'@rp_df["{c}"]<0.1')
 
 
 first_points = [first.query('Species == "Black"')[a].tolist(), first.query('Species == "Red"')[a].tolist(), first.query('Species == "White"')[a].tolist(),first.query('Species == "green_control"')[a].tolist(), first.query('Species == "Rust"')[a].tolist(), first.query('Species == "Rust_Canopy"')[a].tolist(),first.query('Species == "AribicavarGeisha"')[a].tolist()]
@@ -52,8 +52,8 @@ fig.legend(loc='upper center', bbox_to_anchor=(0.75, 0.02),
     fancybox=True, shadow=True, ncol=7)
 fig.text(-0.012,0.5,'Frequency',ha='center', va='center',rotation=90,size=15)
 fig.text(0.15,-0.02,'Reflectance Values',ha='center', va='top',size=15)
-ax1.set_xlim(0,0.2)
-ax2.set_xlim(0,0.125)
-ax3.set_xlim(0,0.1)
+#ax1.set_xlim(0,0.2)
+#ax2.set_xlim(0,0.125)
+#ax3.set_xlim(0,0.1)
 
 plt.show()

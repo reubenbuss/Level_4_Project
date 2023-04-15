@@ -148,7 +148,7 @@ def anova_test(df):
     df_rust = df.query('Species == "Rust"').iloc[:,1:]
     df_rc = df.query('Species == "Rust_Canopy"').iloc[:,1:]
     df_ag = df.query('Species == "AribicavarGeisha"').iloc[:,1:]
-    f_all,p_all = stats.f_oneway(df_b.to_numpy(),df_r.to_numpy(),df_w.to_numpy(),df_gc.to_numpy(),df_rust.to_numpy(),df_rc.to_numpy(),df_ag.to_numpy())
+    f_all,p_all = stats.f_oneway(df_b.to_numpy(),df_r.to_numpy(),df_w.to_numpy())
     print(list(df.columns)[list(p_all).index(max(list(p_all)))])
     f_all = [x/(max(list(f_all))) for x in list(f_all)]
     p_all = [x/(max(list(p_all))) for x in list(p_all)]
@@ -180,7 +180,7 @@ def stats_plot(df):
     count = 0
     names = ['ANOVA','Information Gain','ReliefF']
     colours = ['black','red','green']
-    fig = plt.figure(dpi=240)
+    fig = plt.figure(dpi=240,figsize=(9,3))
     for i in normalised_all_methods:
         plt.plot(wavelengths,i,alpha=0.8,label=names[count],c=colours[count])
         #plt.scatter(wavelengths,i,alpha=0.8,label=names[count],fc=colours[count],edgecolors=None,s=0.5)
@@ -365,7 +365,8 @@ def boxplot_from_crossvalidation_of_dim_reduct(df):
         df_new = dimensionality_reduction(df_old,i)
         X = df_new[list(df_new.columns)[1:]]
         y = df_new.Species
-        results.append(evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y))
+        results.append(evaluate_model(model_dict['LightGBM'](**params['LightGBM']),X,y))
+        cross_validation_confusion_matrix(df_new)
     plt.figure(dpi=240,figsize=(3,6))
     plt.boxplot(results, labels=names, showmeans=True)
     plt.xticks(rotation=45, ha='center')
@@ -377,15 +378,17 @@ def crossvalidation_boxplot_of_different_top_4(df,list_of_top,names):
     Produces a boxplot of different sets of top 4 wavelengths using cross validation on lightgbm
     '''
     results = []
-    plt.figure(dpi=300,figsize=(6.5,6))
+    plt.figure(dpi=300,figsize=(6,4))
     for i,val in enumerate(list_of_top):
         X = df[val]
         y = df.Species
-        res = evaluate_model(model_dict['lightgbm'](**params['lightgbm']),X,y)
+        res = evaluate_model(model_dict['LightGBM'](**params['LightGBM']),X,y)
         results.append(res)
-        plt.text(1.25+i,average(res),'\n'.join(val),ha='left', va='center',size=12)
+        plt.text(1.2+i,average(res),'\n'.join(val),ha='left', va='center',size=12)
+        plt.text(0.8+i,average(res),round(average(res),2),ha='right', va='center',size=12)
+        print(stats.sem(res))
     plt.boxplot(results, labels=names, showmeans=True)
-    plt.xticks(rotation=45, ha='center')
+    plt.xticks(rotation=45, ha='center',fontsize=12)
     plt.ylabel('Accuracy (10 splits, 3 repeats)')
     plt.show()
 
@@ -1027,7 +1030,6 @@ def balanced_cross_validation(df,model_name='LightGBM',p=0.7,repeats=3):
     disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=y.unique())
     disp.plot(xticks_rotation=45)
 
-
 def groups_plot_using_boxplot_all(df):
     # "Viridis-like" 
     groups = make_groups(df)
@@ -1235,41 +1237,139 @@ def groups_plot_using_boxplot_all(df):
     plt.ylim(0.65,1)
     plt.show()
 
+def groups_plot_using_boxplot_med(df):
+    # "Viridis-like" 
+    groups = make_groups(df)
+    selected_wavelengths = [485,500,1337,1447]
+    selected_groups = [groups[0],groups[1],groups[8],groups[9]]
+    results = []
+    positions = []
+    for i,val in enumerate(selected_groups):
+        states = [0,1,2,3]
+        states.remove(i)
+        res_per_group = []
+        position_per_group = []
+        for j in val:
+            chosen_wavelengths = [j]
+            for k in states:
+                chosen_wavelengths.append(int(selected_wavelengths[k]))
+            chosen_wavelengths = list(map(str,list(set(chosen_wavelengths))))
+            X = df[chosen_wavelengths]
+            y = df.Species
+            res = (evaluate_model(model_dict['LightGBM'](**params['LightGBM']),X,y).tolist())
+            res_per_group.append(res)
+            position_per_group.append(j)
+        results.append(res_per_group)
+        positions.append(position_per_group)
+        print('here')
+    plt.figure(figsize=(15,5),dpi=300)
+    first = plt.boxplot(results[0],positions=positions[0],patch_artist=True)
+    second = plt.boxplot(results[1],positions=positions[1],patch_artist=True)
+    third = plt.boxplot(results[2],positions=positions[2],patch_artist=True)
+    forth = plt.boxplot(results[3],positions=positions[3],patch_artist=True)
+    for box in first['boxes']:
+        box.set(facecolor = 'darkgreen' )
+        box.set(color='darkgreen', linewidth=2)
+    for whisker in first['whiskers']:
+        whisker.set(color ='forestgreen',linewidth = 1.5,linestyle ="-")
+    for flier in first['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in first['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in first['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in second['boxes']:
+        box.set(facecolor = 'royalblue' )
+        box.set(color='royalblue', linewidth=2)
+    for whisker in second['whiskers']:
+        whisker.set(color ='cornflowerblue',linewidth = 1.5,linestyle ="-")
+    for flier in second['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in second['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in second['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in third['boxes']:
+        box.set(facecolor = 'darkorange' )
+        box.set(color='darkorange', linewidth=2)
+    for whisker in third['whiskers']:
+        whisker.set(color ='orange',linewidth = 1.5,linestyle ="-")
+    for flier in third['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in third['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in third['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    for box in forth['boxes']:
+        box.set(facecolor = 'darkturquoise' )
+        box.set(color='darkturquoise', linewidth=2)
+    for whisker in forth['whiskers']:
+        whisker.set(color ='turquoise',linewidth = 1.5,linestyle ="-")
+    for flier in forth['fliers']:
+        flier.set(markerfacecolor ='red',markeredgecolor='red',markersize=3)
+    for cap in forth['caps']:
+        cap.set(color ='red',linewidth = 0)
+    for median in forth['medians']:
+        median.set(color ='black',linewidth = 3)
+
+    plt.ylabel('Accuracy (10 splits, 3 repeats)')
+    plt.xlabel('Wavelengths (nm)')
+    plt.xlim(340,1510)
+    plt.xticks([350,500,750,1000,1250,1500],labels=[350,500,750,1000,1250,1500])
+    plt.axvspan(350,506 , ymin=0, ymax=0.12, color='forestgreen',alpha=0.5) # 0 ## 
+    plt.axvspan(497,524 , ymin=0, ymax=0.12, color='cornflowerblue',alpha=0.5) # 1 ##
+    plt.axvspan(515,605 , ymin=0, ymax=0.1, color='plum',alpha=0.5) # 2
+    plt.axvspan(692,707 , ymin=0, ymax=0.1, color='plum',alpha=0.5) # 2 
+    plt.axvspan(590,692 , ymin=0, ymax=0.1, color='crimson',alpha=0.5) #3
+    plt.axvspan(701,725 , ymin=0, ymax=0.1, color='yellow',alpha=0.5) #4
+    plt.axvspan(725,749 , ymin=0, ymax=0.1, color='lime',alpha=0.5) #5
+    plt.axvspan(737,947 , ymin=0, ymax=0.1, color='magenta',alpha=0.5) #6
+    plt.axvspan(905,1355 , ymin=0, ymax=0.1, color='chocolate',alpha=0.5) #7 
+    plt.axvspan(1313,1397 , ymin=0, ymax=0.12, color='orange',alpha=0.5) #8 ##
+    plt.axvspan(1397,1497 , ymin=0, ymax=0.12, color='turquoise',alpha=0.5) #9 ## 
+    plt.vlines(x=selected_wavelengths,ymin=0.65,ymax=0.75,colors = ['darkgreen','royalblue','darkorange','darkturquoise'])
+    plt.ylim(0.62,0.97)
+    plt.show()
+
 #rfe_with_crossvaliation(rp_df)
 #boxplot_from_crossvalidation_of_dim_reduct(rp_df)
-list_of_top_4s = [['389', '512', '719', '767'],['368', '518', '680', '755'],['518','671','755','953'],['512','674','773','989']]
-names = ['Correlation\n+Feature Importance','SVM+Correlation','Correlation\n+ANOVA','LightGBM \n RFE']
+list_of_top_4s = [['389','512', '719', '767'],['485','500', '1337', '1447'],['485','1667','2067','2442']]
+names = ['350nm\n-1000nm','350nm\n-1500nm','350nm\n-2500nm']
 #crossvalidation_boxplot_of_different_top_4(rp_df,list_of_top_4s,names)
 
-#groups_plot_using_boxplot(rwb_df)
+#groups_plot_using_boxplot(rwb_df)485,1667,2067,2442 
 #boxplot_from_crossvalidation_of_dim_reduct(rp_df)
-#rfe_with_crossvaliation_plot(cal_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']])
+#rfe_with_crossvaliation_plot(rp_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887']])
 #print(list(rp_df.columns))
 #svm_groups_plot_using_boxplot(rp_df)
 
-#groups_plot_using_boxplot(rp_df)
+#groups_plot_using_boxplot_med(rp_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995', '1001', '1007', '1013', '1019', '1025', '1031', '1037', '1043', '1049', '1055', '1061', '1067', '1073', '1079', '1085', '1091', '1097', '1103', '1109', '1115', '1121', '1127', '1133', '1139', '1145', '1151', '1157', '1163', '1169', '1175', '1181', '1187', '1193', '1199', '1205', '1211', '1217', '1223', '1229', '1235', '1241', '1247', '1253', '1259', '1265', '1271', '1277', '1283', '1289', '1295', '1301', '1307', '1313', '1319', '1325', '1331', '1337', '1343', '1349', '1355', '1361', '1367', '1373', '1379', '1385', '1391', '1397', '1407', '1417', '1427', '1437', '1447', '1457', '1467', '1477', '1487', '1497']])
 
 #groups_plot_using_boxplot_long(rp_df)
-# groups = make_groups(rp_df)
+# groups = make_groups(rp_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']])
 # new_groups = []
 # checker = []
 # for i in groups: 
 #     new_groups.append([str(x) for x in i if x not in checker])
 #     checker += i
-# print(['Species']+new_groups[0]+new_groups[8]+new_groups[9]+new_groups[10])
-# rfe_with_crossvaliation_plot(rp_df[['Species']+new_groups[0]+new_groups[8]+new_groups[9]+new_groups[10]])
-
+# print(['Species']+new_groups[0]+new_groups[1]+new_groups[4]+new_groups[6])
+# rfe_with_crossvaliation_plot(rp_df[['Species']+new_groups[0]+new_groups[1]+new_groups[4]+new_groups[6]])
 
 #groups_plot_using_boxplot_coffee(coffee_df)
 
-#rfe_with_crossvaliation_plot(coffee_df)
+boxplot_from_crossvalidation_of_dim_reduct((rp_df[['Species', '350', '353', '356', '359', '362', '365', '368', '371', '374', '377', '380', '383', '386', '389', '392', '395', '398', '401', '404', '407', '410', '413', '416', '419', '422', '425', '428', '431', '434', '437', '440', '443', '446', '449', '452', '455', '458', '461', '464', '467', '470', '473', '476', '479', '482', '485', '488', '491', '494', '497', '500', '503', '506', '509', '512', '515', '518', '521', '524', '527', '530', '533', '536', '539', '542', '545', '548', '551', '554', '557', '560', '563', '566', '569', '572', '575', '578', '581', '584', '587', '590', '593', '596', '599', '602', '605', '608', '611', '614', '617', '620', '623', '626', '629', '632', '635', '638', '641', '644', '647', '650', '653', '656', '659', '662', '665', '668', '671', '674', '677', '680', '683', '686', '689', '692', '695', '698', '701', '707', '713', '719', '725', '731', '737', '743', '749', '755', '761', '767', '773', '779', '785', '791', '797', '803', '809', '815', '821', '827', '833', '839', '845', '851', '857', '863', '869', '875', '881', '887', '893', '899', '905', '911', '917', '923', '929', '935', '941', '947', '953', '959', '965', '971', '977', '983', '989', '995']]))
+
+#rfe_with_crossvaliation_plot()
 
 #groups_plot_using_boxplot_coffee_and_mangroves(mangrove_and_coffee_df)
 
 #what are the accuracies of each species and has the ones for mangroves changed with the introduction of coffee data?
 
-#cross_validation_confusion_matrix(rp_df[['Species','350','479','719','803']])
-#cross_validation_confusion_matrix(mangrove_and_coffee_df[['Species','389','512','719','767']])
+#cross_validation_confusion_matrix(mangrove_and_coffee_df[['Species','350','584','677','707']],'SVM')
+#cross_validation_confusion_matrix(mangrove_and_coffee_df[['Species','350', '521', '701', '881']].query('Species != "Rust" & Species != "Rust_Canopy"'))
 
 #cross_validation_confusion_matrix(rp_df[['Species','485','1447']])
 #print(list(mangrove_and_coffee_df.columns))

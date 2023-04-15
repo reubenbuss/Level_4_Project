@@ -18,7 +18,7 @@ mangrove_df = pd.read_csv(r"C:\Users\reube\OneDrive - Durham University\Document
 #select max wavelength
 df_columns = list(mangrove_df.columns)
 df_columns_int_species_dropped = list(map(int,df_columns[1:]))
-to_keep = [x for x in df_columns_int_species_dropped if x > 1500]
+to_keep = [x for x in df_columns_int_species_dropped if x < 1500]
 df = mangrove_df[['Species']+list(map(str,to_keep))]
 #df = pd.concat([mangrove_df,coffee_df],axis=0)
 
@@ -29,7 +29,7 @@ corr_matrix_columns = list(map(int,corr_matrix.columns))
 points = []
 heights = []
 for i in corr_matrix_columns:
-    correlated = [x for x in corr_matrix_columns if corr_matrix.loc[f'{i}',f'{x}'] > 0.95]
+    correlated = [x for x in corr_matrix_columns if corr_matrix.loc[f'{i}',f'{x}'] > 0.9]
     points.append(correlated)
     heights.append([i]*(len(correlated)))
 
@@ -385,11 +385,13 @@ def ROC_Curve_for_selected_wavelengths(df):
     plt.legend()
     plt.show()
 
+#
 #print(ANOVA_feature_selection_on_groups())
-plot_of_highly_correlated_groups_4()
+#plot_of_highly_correlated_groups_4()
 #print(make_groups())
 #print(make_groups())
 #print(lightgbm_feature_selection_on_groups())
+print(df.columns.tolist())
 print('Finished')
 
 # [['Wavelength', 'Black', 'Red', 'White'], 
@@ -404,16 +406,16 @@ print('Finished')
 # [1337, 106.26924359465887, 4.070837831882048, 81.36662309967802], 
 # [1447, 4.728412658481182, 254.23314618292946, 177.71747959914666]]
 
-# [[485, 0.5529502428951213], 
-# [500, 0.32085541263612993], 
-# [518, 0.03421264813733395], 
-# [671, 0.007102833015883052], 
-# [725, 0.04021160446598583], 
-# [755, 0.01952207759875648], 
-# [953, 0.06465845700390596], 
-# [1337, 0.19219747684832206], 
-# [1337, 0.29812467427024675], 
-# [1447, 0.6645764407554791]])
+# [485, 0.5529502428951213, 150.84698766445445, 143.7136806186224, 2.024870351136941] black and red
+# [500, 0.32085541263612993, 59.11099706512571, 106.25856370405086, 5.323532527318344] red and black
+# [518, 0.03421264813733395, 3.5917961749319534, 11.741551093808024, 2.8101579679560866]
+# [671, 0.007102833015883052, 0.062087311065148275, 1.680836574651059, 1.8836822069910357]
+# [725, 0.04021160446598583, 13.160786245181365, 1.2811020361340324, 7.979986198505212]
+# [755, 0.01952207759875648, 5.9928364770822045, 0.31928435061786026, 4.501337859621449]
+# [953, 0.06465845700390596, 22.085124479999287, 5.216442908824948, 8.998755473077436]
+# [1337, 0.19219747684832206, 64.0991253768679, 10.309840285043732, 31.01003838495568]
+# [1337, 0.29812467427024675, 88.64288513662225, 10.430663647518474, 60.93165196398044] black and white ish
+# [1447, 0.6645764407554791, 13.066881320267264, 191.4595393156765, 109.11286510880262] red and white
 
 # [[350, 353, 356, 359, 362, 365, 368, 371, 374, 377, 380, 383, 386, 389, 392, 395, 398, 401, 404, 407, 410, 413, 416, 419, 422, 425, 428, 431, 434, 437, 440, 443, 446, 449, 452, 455, 458, 461, 464, 467, 470, 473, 476, 479, 482, 485, 488, 491, 494, 497, 500, 503, 506], 0.5529502428951213, 150.84698766445445, 143.7136806186224, 2.024870351136941]
 # [[497, 500, 503, 506, 509, 512, 515, 518, 521, 524], 0.32085541263612993, 59.11099706512571, 106.25856370405086, 5.323532527318344]
